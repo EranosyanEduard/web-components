@@ -4,12 +4,18 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build": "tsc && vite build",
+    "check": "npx @biomejs/biome check --write",
     "dev": "vite",
     "devcontainer:dev": "vite --host",
-    "build": "tsc && vite build",
+    "lefthook": "lefthook",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.2.4",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "lefthook": "^1.13.1",
     "typescript": "~5.8.3",
     "vite": "^7.1.6"
   }
