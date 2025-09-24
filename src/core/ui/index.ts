@@ -1,1 +1,7 @@
+export * from './current_instance'
 export { defineComponent } from './define_component'
+export * from './on_before_mount'
+export * from './on_before_update'
+export * from './on_mounted'
+export * from './on_unmounted'
+export * from './on_updated'

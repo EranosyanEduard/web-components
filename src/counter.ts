@@ -1,6 +1,13 @@
 import { html } from 'lit-html'
 import { ref } from './core/reactivity'
-import { defineComponent } from './core/ui'
+import {
+  defineComponent,
+  onBeforeMount,
+  onBeforeUpdate,
+  onMounted,
+  onUnmounted,
+  onUpdated
+} from './core/ui'
 
 const VMessage = defineComponent({
   name: 'VMessage',
@@ -11,6 +18,21 @@ const VMessage = defineComponent({
     }
   },
   setup(props) {
+    onBeforeMount(() => {
+      console.log('VMessage created')
+    })
+    onMounted(() => {
+      console.log('VMessage mounted')
+    })
+    onBeforeUpdate(() => {
+      console.log('VMessage before update')
+    })
+    onUpdated(() => {
+      console.log('VMessage updated')
+    })
+    onUnmounted(() => {
+      console.log('VMessage destroyed')
+    })
     return () => html`<span style="font-weight: bold">${props.value}</span>`
   }
 })
