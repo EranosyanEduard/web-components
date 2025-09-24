@@ -1,19 +1,20 @@
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
-import { type RefTypedef, ref } from '../ref'
+import type { Accessor } from '../../typedef'
+import { type Ref, ref } from '../ref'
 import { watchEffect } from '../watch_effect'
-import type * as Typedef from './typedef'
+import type { ComputedRef } from './typedef'
 
 class Computed<T> {
-  static isComputed(value: unknown): value is Typedef.ComputedRef<unknown> {
+  static isComputed(value: unknown): value is ComputedRef<unknown> {
     return value instanceof Computed
   }
 
-  private readonly accessor: Typedef.Accessor<T>
+  private readonly accessor: Accessor<T>
 
-  private readonly refValue: RefTypedef.Ref<T>
+  private readonly refValue: Ref<T>
 
-  constructor(accessor: Typedef.Accessor<T> | Typedef.Accessor<T>['get']) {
+  constructor(accessor: Accessor<T> | Accessor<T>['get']) {
     this.accessor = isFunction(accessor)
       ? { get: accessor, set: noop }
       : accessor

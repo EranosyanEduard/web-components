@@ -1,10 +1,10 @@
 import isObject from 'es-toolkit/compat/isObject'
 import noop from 'es-toolkit/compat/noop'
 import { Dependency } from '../dependency'
-import type * as Typedef from './typedef'
+import type { Reactive as TReactive } from './typedef'
 
 class Reactive<T extends object> {
-  static isReactive(value: unknown): value is Typedef.Reactive<object> {
+  static isReactive(value: unknown): value is TReactive<object> {
     return (
       // @ts-expect-error проигнорировать ошибку типизации:
       // невозможно гарантировать, что REACTIVE_SYMBOL является ключом value.
@@ -19,7 +19,7 @@ class Reactive<T extends object> {
     return Reactive.instances.get(object) ?? new Reactive(object)
   }
 
-  static trackAll(reactiveValue: Typedef.Reactive<object>): void {
+  static trackAll(reactiveValue: TReactive<object>): void {
     // @ts-expect-error проигнорировать ошибку типизации:
     // реактивный объект имеет данное специальное свойство.
     noop(reactiveValue[Reactive.MagicProps.TRACK_ALL])
@@ -32,7 +32,7 @@ class Reactive<T extends object> {
     TRACK_ALL: Symbol()
   } satisfies Record<string, symbol>)
 
-  readonly value: Typedef.Reactive<T>
+  readonly value: TReactive<T>
 
   private readonly dependency: Dependency<T>
 
@@ -45,7 +45,7 @@ class Reactive<T extends object> {
     Reactive.instances.set(object, this)
   }
 
-  private createReactiveValue(object: T): Typedef.Reactive<T> {
+  private createReactiveValue(object: T): TReactive<T> {
     // @ts-expect-error проигнорировать ошибку типизации:
     // подобная типизация возвращаемого значения позволяет
     // вывести тип реактивного объекта в утилитах типов.

@@ -1,9 +1,9 @@
-import type { RefTypedef } from '../../ref'
-import type { ComputedRefSymbol } from './ComputedRefSymbol'
+import type { RefLike } from '../../ref'
 
-export type ComputedRef<T> = Readonly<RefTypedef.RefLike<T>> & {
+export declare const ComputedRefSymbol: unique symbol
+export type ComputedRef<T> = Readonly<RefLike<T>> & {
   readonly [ComputedRefSymbol]: true
 }
-export type WritableComputedRef<T> = RefTypedef.RefLike<T> & {
+export type WritableComputedRef<T> = RefLike<T> & {
   readonly [ComputedRefSymbol]: true
 }

@@ -2,41 +2,42 @@ import isEqual from 'es-toolkit/compat/isEqual'
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
 import _once from 'es-toolkit/compat/once'
-import { type ComputedTypedef, computed } from '../computed'
-import { isReactive, Reactive, type ReactiveTypedef } from '../reactive'
-import type { RefTypedef } from '../ref'
+import {
+  type Accessor,
+  type ComputedRef,
+  computed,
+  type WritableComputedRef
+} from '../computed'
+import { isReactive, type Reactive, reactiveTrackAll } from '../reactive'
+import type { Ref, RefLike } from '../ref'
 import { watchEffect } from '../watch_effect'
-import type * as Typedef from './typedef'
+import type { WatchHandler, WatchOptions } from './typedef'
 
 function watch<T>(
-  source:
-    | ComputedTypedef.Accessor<T>['get']
-    | ComputedTypedef.ComputedRef<T>
-    | ComputedTypedef.WritableComputedRef<T>
-    | RefTypedef.Ref<T>,
-  handler: Typedef.WatchHandler<T>,
-  options?: Partial<Typedef.WatchOptions>
+  source: Accessor<T>['get'] | ComputedRef<T> | WritableComputedRef<T> | Ref<T>,
+  handler: WatchHandler<T>,
+  options?: Partial<WatchOptions>
 ): VoidFunction
 function watch<T extends object>(
-  source: ReactiveTypedef.Reactive<T>,
-  handler: Typedef.WatchHandler<T>,
-  options?: Partial<Typedef.WatchOptions>
+  source: Reactive<T>,
+  handler: WatchHandler<T>,
+  options?: Partial<WatchOptions>
 ): VoidFunction
 function watch(
   source:
-    | ComputedTypedef.Accessor<unknown>['get']
-    | ComputedTypedef.ComputedRef<unknown>
-    | ComputedTypedef.WritableComputedRef<unknown>
-    | ReactiveTypedef.Reactive<object>
-    | RefTypedef.Ref<unknown>,
-  handler: Typedef.WatchHandler<unknown>,
-  options?: Partial<Typedef.WatchOptions>
+    | Accessor<unknown>['get']
+    | ComputedRef<unknown>
+    | WritableComputedRef<unknown>
+    | Reactive<object>
+    | Ref<unknown>,
+  handler: WatchHandler<unknown>,
+  options?: Partial<WatchOptions>
 ): VoidFunction {
   const { deep = false, immediate = false, once = false } = options ?? {}
   let canUseHandler = immediate
   let oldValue: unknown
   let source_: {
-    readonly self: RefTypedef.RefLike<unknown>
+    readonly self: RefLike<unknown>
     readonly setup: VoidFunction
   }
   if (isFunction(source)) {
@@ -47,7 +48,7 @@ function watch(
   } else if (isReactive(source)) {
     source_ = {
       self: { value: source },
-      setup: _once(() => Reactive.trackAll(source))
+      setup: _once(() => reactiveTrackAll(source))
     }
   } else {
     source_ = {

@@ -1,4 +1,4 @@
 import type { RefLike } from './RefLike'
-import type { RefSymbol } from './RefSymbol'
 
+export declare const RefSymbol: unique symbol
 export type Ref<T> = RefLike<T> & { readonly [RefSymbol]: true }

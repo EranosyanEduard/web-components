@@ -1,12 +1,12 @@
-import { type ReactiveTypedef, reactive } from '../reactive'
-import type * as Typedef from './typedef'
+import { type Reactive, reactive } from '../reactive'
+import type { RefLike, Ref as TRef } from './typedef'
 
 class Ref<T> {
-  static isRef(value: unknown): value is Typedef.Ref<unknown> {
+  static isRef(value: unknown): value is TRef<unknown> {
     return value instanceof Ref
   }
 
-  private readonly reactiveValue: ReactiveTypedef.Reactive<Typedef.RefLike<T>>
+  private readonly reactiveValue: Reactive<RefLike<T>>
 
   constructor(value: T) {
     this.reactiveValue = reactive({ value })
