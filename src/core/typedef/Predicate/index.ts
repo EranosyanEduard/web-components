@@ -1,2 +1,1 @@
-export type * from './Accessor'
 export type * from './Predicate'

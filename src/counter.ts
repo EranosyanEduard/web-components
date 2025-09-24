@@ -1,20 +1,32 @@
-import { computed, ref, watch, watchEffect } from './core/reactivity'
+import { html } from 'lit-html'
+import { ref } from './core/reactivity'
+import { defineComponent } from './core/ui'
 
-export function setupCounter(element: HTMLButtonElement) {
-  const counter = ref(0)
-  const innerHTML = computed<string>({
-    get: () => `Count: ${counter.value}`,
-    set: () => {
-      counter.value++
+const VMessage = defineComponent({
+  name: 'VMessage',
+  props: {
+    value: {
+      type: String,
+      required: true
     }
-  })
-  watch(counter, console.log)
-  watch(innerHTML, console.log)
-  watch(() => counter.value, console.log)
-  watchEffect(() => {
-    element.innerHTML = innerHTML.value
-  })
-  element.addEventListener('click', () => {
-    innerHTML.value = ''
-  })
-}
+  },
+  setup(props) {
+    return () => html`<span style="font-weight: bold">${props.value}</span>`
+  }
+})
+const VCounter = defineComponent({
+  name: 'VCounter',
+  setup() {
+    const counter = ref(0)
+    return () => {
+      return html`
+        <button type="button" @click=${() => counter.value++}>
+          Count:
+          <v-message .value=${counter.value.toString()}></v-message>
+        </button>
+      `
+    }
+  }
+})
+
+export { VCounter, VMessage }

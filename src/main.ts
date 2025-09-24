@@ -1,7 +1,7 @@
 import './style.css'
-import typescriptLogo from './typescript.svg'
 import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import typescriptLogo from './typescript.svg'
+import './counter.ts'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
@@ -13,12 +13,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </a>
     <h1>Vite + TypeScript</h1>
     <div class="card">
-      <button id="counter" type="button"></button>
+      <v-counter></v-counter>
     </div>
     <p class="read-the-docs">
       Click on the Vite and TypeScript logos to learn more
     </p>
   </div>
 `
-
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
