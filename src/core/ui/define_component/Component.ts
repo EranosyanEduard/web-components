@@ -4,6 +4,7 @@ import { type html, render } from 'lit-html'
 import { reactive, watchEffect } from '../../reactivity'
 import type { Getter } from '../../typedef'
 import { type CurrentInstance, setCurrentInstance } from '../current_instance'
+import { getParentInstance, setParentInstance } from '../parent_instance'
 import Prop from './Prop'
 import type { ComponentOptions } from './typedef'
 
@@ -33,7 +34,9 @@ class Component<
         onMounted: new Set(),
         onUnmounted: new Set(),
         onUpdated: new Set()
-      }
+      },
+      parent: getParentInstance(),
+      provides: new Map()
     }
     this.root = this.defineRoot()
     this.template = this.defineTemplate()
@@ -90,6 +93,7 @@ class Component<
   private defineRender(): void {
     let rendered = false
     watchEffect(() => {
+      setParentInstance(this)
       if (rendered) {
         this.useLifecycleHooks({
           clear: false,
@@ -102,6 +106,9 @@ class Component<
           clear: false,
           hook: 'onUpdated'
         })
+        setParentInstance(null)
+      } else {
+        setParentInstance(this.$options.parent)
       }
       rendered = true
     })

@@ -1,23 +1,24 @@
 import { html } from 'lit-html'
-import { ref } from './core/reactivity'
+import { type Ref, ref } from './core/reactivity'
 import {
   defineComponent,
+  type InjectionKey,
+  inject,
   onBeforeMount,
   onBeforeUpdate,
   onMounted,
   onUnmounted,
-  onUpdated
+  onUpdated,
+  provide
 } from './core/ui'
 
+const counterInjectionKey: InjectionKey<Ref<number>> = Symbol('')
 const VMessage = defineComponent({
   name: 'VMessage',
-  props: {
-    value: {
-      type: String,
-      required: true
-    }
-  },
-  setup(props) {
+  setup() {
+    const counter = inject(counterInjectionKey, () => {
+      throw new Error('Не удалось осуществить инъекцию зависимости')
+    })
     onBeforeMount(() => {
       console.log('VMessage created')
     })
@@ -33,7 +34,7 @@ const VMessage = defineComponent({
     onUnmounted(() => {
       console.log('VMessage destroyed')
     })
-    return () => html`<span style="font-weight: bold">${props.value}</span>`
+    return () => html`<span style="font-weight: bold">${counter.value}</span>`
   }
 })
 const VCounter = defineComponent({
@@ -50,7 +51,7 @@ const VCounter = defineComponent({
       return html`
         <button type="button" @click=${() => emit('input', props.value + 1)}>
           Count:
-          <v-message .value=${props.value.toString()}></v-message>
+          <v-message></v-message>
         </button>
       `
     }
@@ -63,6 +64,7 @@ const VCard = defineComponent({
     const onInput = (evt: CustomEvent<number>) => {
       counter.value = evt.detail
     }
+    provide(counterInjectionKey, counter)
     return () => {
       return html`<v-counter .value=${counter.value} @input=${onInput}></v-counter>`
     }

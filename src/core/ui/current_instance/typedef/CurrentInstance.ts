@@ -7,5 +7,7 @@ export interface CurrentInstance extends HTMLElement {
       readonly onUnmounted: Set<VoidFunction>
       readonly onUpdated: Set<VoidFunction>
     }
+    readonly parent: CurrentInstance | null
+    readonly provides: Map<symbol, unknown>
   }
 }
