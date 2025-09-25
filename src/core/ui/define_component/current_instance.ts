@@ -1,11 +1,11 @@
-import type { Accessor } from '../../typedef'
+import type { Accessor, Maybe } from '../../typedef'
 import type { CurrentInstance } from './typedef'
 
-let instance: CurrentInstance<Record<string, unknown>, string> | null = null
-const currentInstance: Accessor<CurrentInstance<
-  Record<string, unknown>,
-  string
-> | null> = {
+type MaybeCurrentInstance = Maybe<
+  CurrentInstance<Record<string, unknown>, string>
+>
+let instance: MaybeCurrentInstance = null
+const currentInstance: Accessor<MaybeCurrentInstance> = {
   get: () => instance,
   set: (context) => {
     instance = context

@@ -1,6 +1,8 @@
+import type { Maybe } from '../../typedef'
+
 class Effect {
   /** Активный эффект */
-  static current: Effect | null = null
+  static current: Maybe<Effect> = null
 
   private readonly ondestroyListeners: Set<(effect: Effect) => void>
 
