@@ -1,7 +1,6 @@
 import isNull from 'es-toolkit/compat/isNull'
 import type { Getter } from '../../typedef'
-import { getCurrentInstance } from '../current_instance'
-import { getParentInstance } from '../parent_instance'
+import { getCurrentInstance, getParentInstance } from '../define_component'
 import type { DependencyInjection, InjectionKey } from './typedef'
 
 const di: DependencyInjection<unknown> = {

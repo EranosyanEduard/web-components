@@ -1,7 +1,11 @@
-import { type CurrentInstance, getCurrentInstance } from '../current_instance'
+import { getCurrentInstance } from './current_instance'
+import type { CurrentInstance } from './typedef'
 
 function onLifecycleHook(
-  hook: keyof CurrentInstance['$options']['hooks']
+  hook: keyof CurrentInstance<
+    Record<string, unknown>,
+    string
+  >['$options']['hooks']
 ): (cb: VoidFunction) => void {
   return (cb) => {
     getCurrentInstance()?.$options.hooks[hook].add(cb)

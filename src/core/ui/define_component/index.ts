@@ -1,3 +1,5 @@
+export * from './current_instance'
 export { default as defineComponent } from './define_component'
 export * from './on_lifecycle'
+export * from './parent_instance'
 export type * as DefineComponentTypedef from './typedef'

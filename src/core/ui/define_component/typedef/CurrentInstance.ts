@@ -1,5 +1,11 @@
-export interface CurrentInstance extends HTMLElement {
+import type { ComponentOptions } from './Component'
+
+export interface CurrentInstance<
+  Props extends Record<string, unknown>,
+  Emits extends string
+> extends HTMLElement {
   readonly $options: {
+    readonly componentOptions: ComponentOptions<Props, Emits>
     readonly hooks: {
       readonly onBeforeMount: Set<VoidFunction>
       readonly onBeforeUpdate: Set<VoidFunction>
@@ -7,7 +13,7 @@ export interface CurrentInstance extends HTMLElement {
       readonly onUnmounted: Set<VoidFunction>
       readonly onUpdated: Set<VoidFunction>
     }
-    readonly parent: CurrentInstance | null
+    readonly parent: CurrentInstance<Record<string, unknown>, string> | null
     readonly provides: Map<symbol, unknown>
   }
 }
