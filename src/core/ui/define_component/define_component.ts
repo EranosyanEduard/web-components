@@ -8,10 +8,12 @@ import Prop from './Prop'
 import type { ComponentOptions, PropsOptions } from './typedef'
 
 function defineComponent<
-  Props extends Record<string, unknown> = Record<string, unknown>
->(options: ComponentOptions<Props>): CustomElementConstructor {
+  Props extends Record<string, unknown> = Record<string, unknown>,
+  Emits extends string = string
+>(options: ComponentOptions<Props, Emits>): CustomElementConstructor {
   const {
     name,
+    emits = [] as [],
     props: propsOptions = {} as PropsOptions<Props>,
     setup,
     shadowRootConfig = null
@@ -116,10 +118,15 @@ function defineComponent<
     private defineTemplate(): ReturnType<typeof setup> {
       setCurrentInstance(this)
       try {
-        return setup(this.defineProps())
+        return setup(this.defineProps(), { emit: this.emit.bind(this) })
       } finally {
         setCurrentInstance(null)
       }
+    }
+
+    private emit(eventType: Emits, detail?: unknown) {
+      if (!emits.includes(eventType)) return
+      this.dispatchEvent(new CustomEvent(eventType, { detail }))
     }
 
     private useLifecycleHooks(args: {

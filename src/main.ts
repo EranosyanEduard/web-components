@@ -13,7 +13,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </a>
     <h1>Vite + TypeScript</h1>
     <div class="card">
-      <v-counter></v-counter>
+      <v-card></v-card>
     </div>
     <p class="read-the-docs">
       Click on the Vite and TypeScript logos to learn more

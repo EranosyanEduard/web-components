@@ -38,17 +38,35 @@ const VMessage = defineComponent({
 })
 const VCounter = defineComponent({
   name: 'VCounter',
-  setup() {
-    const counter = ref(0)
+  props: {
+    value: {
+      type: Number,
+      required: true
+    }
+  },
+  emits: ['input'],
+  setup(props, { emit }) {
     return () => {
       return html`
-        <button type="button" @click=${() => counter.value++}>
+        <button type="button" @click=${() => emit('input', props.value + 1)}>
           Count:
-          <v-message .value=${counter.value.toString()}></v-message>
+          <v-message .value=${props.value.toString()}></v-message>
         </button>
       `
     }
   }
 })
+const VCard = defineComponent({
+  name: 'VCard',
+  setup() {
+    const counter = ref(0)
+    const onInput = (evt: CustomEvent<number>) => {
+      counter.value = evt.detail
+    }
+    return () => {
+      return html`<v-counter .value=${counter.value} @input=${onInput}></v-counter>`
+    }
+  }
+})
 
-export { VCounter, VMessage }
+export { VCard, VCounter, VMessage }
