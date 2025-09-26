@@ -12,14 +12,14 @@ import type { AllPropOptions, PropConstructor, PropOptions } from './typedef'
 import { PropTypeError } from './utils'
 
 class Prop<T> {
-  private static defineValidator<T>(
+  static #defineValidator<T>(
     name: string,
     propOptions: Pick<Required<PropOptions<T>>, 'type' | 'validator'>
   ): Predicate<T> {
     const { type, validator } = propOptions
     const types = castArray(type)
     const validators = types.flatMap(
-      (propType) => Prop.DEFAULT_PROP_VALIDATORS.get(propType) ?? []
+      (propType) => Prop.#DEFAULT_PROP_VALIDATORS.get(propType) ?? []
     )
     return (propValue) => {
       const isValidPropType =
@@ -36,7 +36,7 @@ class Prop<T> {
     }
   }
 
-  private static readonly DEFAULT_PROP_VALIDATORS: ReadonlyMap<
+  static readonly #DEFAULT_PROP_VALIDATORS: ReadonlyMap<
     PropConstructor<unknown>,
     Predicate<unknown>
   > = new Map<PropConstructor<unknown>, Predicate<unknown>>([
@@ -68,7 +68,7 @@ class Prop<T> {
       default: defaultValue,
       type,
       required,
-      validator: Prop.defineValidator(name, {
+      validator: Prop.#defineValidator(name, {
         type,
         validator
       })

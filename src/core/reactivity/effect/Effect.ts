@@ -4,21 +4,21 @@ class Effect {
   /** Активный эффект */
   static current: Maybe<Effect> = null
 
-  private readonly ondestroyListeners: Set<(effect: Effect) => void>
+  readonly #ondestroyListeners: Set<(effect: Effect) => void>
 
-  private readonly value: VoidFunction
+  readonly #value: VoidFunction
 
   constructor(value: VoidFunction) {
-    this.ondestroyListeners = new Set()
-    this.value = value
+    this.#ondestroyListeners = new Set()
+    this.#value = value
   }
 
   ondestroy(listener: (effect: Effect) => void): void {
-    this.ondestroyListeners.add(listener)
+    this.#ondestroyListeners.add(listener)
   }
 
   run(): void {
-    this.value()
+    this.#value()
   }
 
   use(): VoidFunction {
@@ -28,11 +28,11 @@ class Effect {
     } finally {
       Effect.current = null
     }
-    return this.destroy.bind(this)
+    return this.#destroy.bind(this)
   }
 
-  private destroy(): void {
-    this.ondestroyListeners.forEach((listener) => {
+  #destroy(): void {
+    this.#ondestroyListeners.forEach((listener) => {
       listener(this)
     })
   }

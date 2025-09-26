@@ -6,18 +6,18 @@ class Ref<T> {
     return value instanceof Ref
   }
 
-  private readonly reactiveValue: Reactive<RefLike<T>>
+  readonly #reactiveValue: Reactive<RefLike<T>>
 
   constructor(value: T) {
-    this.reactiveValue = reactive({ value })
+    this.#reactiveValue = reactive({ value })
   }
 
   get value(): T {
-    return this.reactiveValue.value
+    return this.#reactiveValue.value
   }
 
   set value(newValue: T) {
-    this.reactiveValue.value = newValue
+    this.#reactiveValue.value = newValue
   }
 }
 

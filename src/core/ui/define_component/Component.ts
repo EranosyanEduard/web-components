@@ -17,9 +17,9 @@ class Component<
 {
   readonly $options: CurrentInstance<Props, Emits>['$options']
 
-  private readonly root: this | ShadowRoot
+  readonly #root: this | ShadowRoot
 
-  private readonly template: Getter<ReturnType<typeof html>>
+  readonly #template: Getter<ReturnType<typeof html>>
 
   /** created */
   constructor(componentOptions: ComponentOptions<Props, Emits>) {
@@ -36,23 +36,23 @@ class Component<
       parent: getParentInstance(),
       provides: new Map()
     }
-    this.root = this.defineRoot()
-    this.template = this.defineTemplate()
-    this.$options.hooks.onMounted.add(this.defineRender.bind(this))
-    this.useLifecycleHooks({ hook: 'onBeforeMount' })
+    this.#root = this.#defineRoot()
+    this.#template = this.#defineTemplate()
+    this.$options.hooks.onMounted.add(this.#defineRender.bind(this))
+    this.#useLifecycleHooks({ hook: 'onBeforeMount' })
   }
 
   /** mounted */
   connectedCallback(): void {
-    this.useLifecycleHooks({ hook: 'onMounted' })
+    this.#useLifecycleHooks({ hook: 'onMounted' })
   }
 
   /** destroyed */
   disconnectedCallback(): void {
-    this.useLifecycleHooks({ hook: 'onUnmounted' })
+    this.#useLifecycleHooks({ hook: 'onUnmounted' })
   }
 
-  private defineProps(): Props {
+  #defineProps(): Props {
     const props = reactive({})
     Object.defineProperties(
       this,
@@ -91,7 +91,7 @@ class Component<
     return props
   }
 
-  private defineRender(): void {
+  #defineRender(): void {
     let rendered = false
     watchEffect(() => {
       // @ts-expect-error проигнорировать ошибку типизации:
@@ -99,14 +99,14 @@ class Component<
       // случае это не повлияет на корректность работы кода.
       setParentInstance(this)
       if (rendered) {
-        this.useLifecycleHooks({
+        this.#useLifecycleHooks({
           clear: false,
           hook: 'onBeforeUpdate'
         })
       }
-      render(this.template(), this.root)
+      render(this.#template(), this.#root)
       if (rendered) {
-        this.useLifecycleHooks({
+        this.#useLifecycleHooks({
           clear: false,
           hook: 'onUpdated'
         })
@@ -118,32 +118,32 @@ class Component<
     })
   }
 
-  private defineRoot(): this | ShadowRoot {
+  #defineRoot(): this | ShadowRoot {
     return isObject(this.$options.componentOptions.shadowRootConfig)
       ? this.attachShadow(this.$options.componentOptions.shadowRootConfig)
       : this
   }
 
-  private defineTemplate(): Getter<ReturnType<typeof html>> {
+  #defineTemplate(): Getter<ReturnType<typeof html>> {
     // @ts-expect-error проигнорировать ошибку типизации:
     // невозможно устранить ошибку типизации, но в данном
     // случае это не повлияет на корректность работы кода.
     setCurrentInstance(this)
     try {
-      return this.$options.componentOptions.setup(this.defineProps(), {
-        emit: this.emit.bind(this)
+      return this.$options.componentOptions.setup(this.#defineProps(), {
+        emit: this.#emit.bind(this)
       })
     } finally {
       setCurrentInstance(null)
     }
   }
 
-  private emit(eventType: Emits, detail?: unknown) {
+  #emit(eventType: Emits, detail?: unknown) {
     if (!this.$options.componentOptions.emits?.includes(eventType)) return
     this.dispatchEvent(new CustomEvent(eventType, { detail }))
   }
 
-  private useLifecycleHooks(args: {
+  #useLifecycleHooks(args: {
     readonly clear?: boolean
     readonly hook: keyof CurrentInstance<Props, Emits>['$options']['hooks']
   }) {

@@ -10,29 +10,29 @@ class Computed<T> {
     return value instanceof Computed
   }
 
-  private readonly accessor: Accessor<T>
+  readonly #accessor: Accessor<T>
 
-  private readonly refValue: Ref<T>
+  readonly #refValue: Ref<T>
 
   constructor(accessor: Accessor<T> | Accessor<T>['get']) {
-    this.accessor = isFunction(accessor)
+    this.#accessor = isFunction(accessor)
       ? { get: accessor, set: noop }
       : accessor
     // @ts-expect-error проигнорировать ошибку типизации:
     // значение undefined будет немедленно заменено в watchEffect
     // на значение корректного типа.
-    this.refValue = ref(undefined)
+    this.#refValue = ref(undefined)
     watchEffect(() => {
-      this.refValue.value = this.accessor.get()
+      this.#refValue.value = this.#accessor.get()
     })
   }
 
   get value(): T {
-    return this.refValue.value
+    return this.#refValue.value
   }
 
   set value(newValue: T) {
-    this.accessor.set(newValue)
+    this.#accessor.set(newValue)
   }
 }
 
