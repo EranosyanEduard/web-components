@@ -2,8 +2,8 @@ import isEqual from 'es-toolkit/compat/isEqual'
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
 import _once from 'es-toolkit/compat/once'
+import type { Accessor } from '../../typedef'
 import {
-  type Accessor,
   type ComputedRef,
   computed,
   type WritableComputedRef

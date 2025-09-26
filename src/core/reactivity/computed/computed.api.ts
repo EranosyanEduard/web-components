@@ -1,5 +1,6 @@
+import type { Accessor } from '../../typedef'
 import Computed from './Computed'
-import type { Accessor, ComputedRef, WritableComputedRef } from './typedef'
+import type { ComputedRef, WritableComputedRef } from './typedef'
 
 function computed<T>(value: Accessor<T>): WritableComputedRef<T>
 function computed<T>(value: Accessor<T>['get']): ComputedRef<T>
