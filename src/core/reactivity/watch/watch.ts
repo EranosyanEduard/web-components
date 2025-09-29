@@ -2,7 +2,7 @@ import isEqual from 'es-toolkit/compat/isEqual'
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
 import _once from 'es-toolkit/compat/once'
-import type { Accessor } from '../../typedef'
+import type { Getter } from '../../typedef'
 import {
   type ComputedRef,
   computed,
@@ -14,7 +14,7 @@ import { watchEffect } from '../watch_effect'
 import type { WatchHandler, WatchOptions } from './typedef'
 
 function watch<T>(
-  source: Accessor<T>['get'] | ComputedRef<T> | WritableComputedRef<T> | Ref<T>,
+  source: Getter<T> | ComputedRef<T> | WritableComputedRef<T> | Ref<T>,
   handler: WatchHandler<T>,
   options?: Partial<WatchOptions>
 ): VoidFunction
@@ -23,9 +23,15 @@ function watch<T extends object>(
   handler: WatchHandler<T>,
   options?: Partial<WatchOptions>
 ): VoidFunction
+/**
+ * Создать наблюдатель.
+ * @returns функцию, прекращающую наблюдение.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 function watch(
   source:
-    | Accessor<unknown>['get']
+    | Getter<unknown>
     | ComputedRef<unknown>
     | WritableComputedRef<unknown>
     | Reactive<object>

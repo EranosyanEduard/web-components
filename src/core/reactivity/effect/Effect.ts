@@ -1,40 +1,51 @@
+import noop from 'es-toolkit/compat/noop'
 import type { Maybe } from '../../typedef'
 
+/**
+ * Эффект, необходимый для реализации системы реактивности.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 class Effect {
   /** Активный эффект */
   static current: Maybe<Effect> = null
 
-  readonly #ondestroyListeners: Set<(effect: Effect) => void>
+  #destroyed: boolean
+
+  readonly #ondestroy: Set<(e: Effect) => void>
 
   readonly #value: VoidFunction
 
   constructor(value: VoidFunction) {
-    this.#ondestroyListeners = new Set()
+    this.#destroyed = false
+    this.#ondestroy = new Set()
     this.#value = value
   }
 
-  ondestroy(listener: (effect: Effect) => void): void {
-    this.#ondestroyListeners.add(listener)
-  }
-
-  run(): void {
-    this.#value()
+  ondestroy(ondestroy: (e: Effect) => void): void {
+    if (!this.#destroyed) {
+      this.#ondestroy.add(ondestroy)
+    }
   }
 
   use(): VoidFunction {
+    if (this.#destroyed) {
+      return noop
+    }
     Effect.current = this
     try {
-      Effect.current.run()
+      this.#value()
     } finally {
       Effect.current = null
     }
-    return this.#destroy.bind(this)
-  }
-
-  #destroy(): void {
-    this.#ondestroyListeners.forEach((listener) => {
-      listener(this)
-    })
+    return () => {
+      if (!this.#destroyed) {
+        this.#destroyed = true
+        this.#ondestroy.forEach((ondestroy) => {
+          ondestroy(this)
+        })
+      }
+    }
   }
 }
 

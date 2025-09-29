@@ -1,14 +1,26 @@
 import { type Reactive, reactive } from '../reactive'
-import type { RefLike, Ref as TRef } from './typedef'
+import type * as Typedef from './typedef'
 
+/**
+ * Реактивное значение.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 class Ref<T> {
-  static isRef(value: unknown): value is TRef<unknown> {
+  static isRef(value: unknown): value is Typedef.Ref<unknown> {
     return value instanceof Ref
   }
 
-  readonly #reactiveValue: Reactive<RefLike<T>>
+  static new<T>(value: T): T extends Typedef.Ref<unknown> ? T : Typedef.Ref<T> {
+    // @ts-expect-error проигнорировать ошибку типизации:
+    // значение, возвращаемое методом будет соответствовать
+    // типу Ref<T>.
+    return Ref.isRef(value) ? value : new Ref(value)
+  }
 
-  constructor(value: T) {
+  readonly #reactiveValue: Reactive<Typedef.RefLike<T>>
+
+  private constructor(value: T) {
     this.#reactiveValue = reactive({ value })
   }
 

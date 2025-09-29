@@ -1,83 +1,94 @@
+import isArray from 'es-toolkit/compat/isArray'
 import isObject from 'es-toolkit/compat/isObject'
 import noop from 'es-toolkit/compat/noop'
 import { Dependency } from '../dependency'
-import type { Reactive as TReactive } from './typedef'
+import type * as Typedef from './typedef'
 
+const INSTANCES = new WeakMap<object, Reactive<object>>()
+const MagicProps = Object.freeze({
+  REACTIVE_SYMBOL: Symbol(),
+  TRACK_ALL: Symbol()
+} satisfies Record<string, symbol>)
+
+/**
+ * Реактивный объект.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 class Reactive<T extends object> {
-  static isReactive(value: unknown): value is TReactive<object> {
-    return (
-      // @ts-expect-error проигнорировать ошибку типизации:
-      // невозможно гарантировать, что REACTIVE_SYMBOL является ключом value.
-      isObject(value) && value[Reactive.#MagicProps.REACTIVE_SYMBOL] === true
-    )
-  }
-
-  static new<T extends object>(object: T): Reactive<T> {
+  static isReactive(value: unknown): value is Typedef.Reactive<object> {
     // @ts-expect-error проигнорировать ошибку типизации:
-    // значение, возвращаемое методом будет соответствовать
-    // типу Reactive<T>.
-    return Reactive.#instances.get(object) ?? new Reactive(object)
+    // невозможно гарантировать, что REACTIVE_SYMBOL является ключом value.
+    return isObject(value) && value[MagicProps.REACTIVE_SYMBOL] === true
   }
 
-  static trackAll(reactiveValue: TReactive<object>): void {
+  static new<T extends object>(
+    object: T
+  ): T extends Typedef.Reactive<object> ? T : Typedef.Reactive<T> {
+    return Reactive.isReactive(object)
+      ? // @ts-expect-error проигнорировать ошибку типизации:
+        // значение, возвращаемое методом будет соответствовать
+        // типу Reactive<T>.
+        object
+      : // @ts-expect-error см. коммент выше.
+        (INSTANCES.get(object)?.value ?? new Reactive(object).value)
+  }
+
+  static trackAll(reactiveValue: Typedef.Reactive<object>): void {
     // @ts-expect-error проигнорировать ошибку типизации:
     // реактивный объект имеет данное специальное свойство.
-    noop(reactiveValue[Reactive.#MagicProps.TRACK_ALL])
+    noop(reactiveValue[MagicProps.TRACK_ALL])
   }
 
-  static readonly #instances = new WeakMap<object, Reactive<object>>()
-
-  static readonly #MagicProps = Object.freeze({
-    REACTIVE_SYMBOL: Symbol(),
-    TRACK_ALL: Symbol()
-  } satisfies Record<string, symbol>)
-
-  readonly value: TReactive<T>
-
-  readonly #dependency: Dependency<T>
+  readonly value: Typedef.Reactive<T>
 
   private constructor(object: T) {
-    this.#dependency = new Dependency()
-    this.value = this.#createReactiveValue(object)
-    // @ts-expect-error проигнорировать ошибку типизации:
-    // несоответствие значения this типу Reactive<object>
-    // не влияет на работоспособность кода.
-    Reactive.#instances.set(object, this)
+    this.value = this.#createReactiveObject(object)
+    INSTANCES.set(object, this)
   }
 
-  #createReactiveValue(object: T): TReactive<T> {
+  #createReactiveObject(object: T): Typedef.Reactive<T> {
+    const dependency = new Dependency()
     // @ts-expect-error проигнорировать ошибку типизации:
     // подобная типизация возвращаемого значения позволяет
-    // вывести тип реактивного объекта в утилитах типов.
+    // использовать тип реактивного объекта в утилитах типов.
     return new Proxy(object, {
+      deleteProperty: (target, prop) => {
+        const hasProp = Object.hasOwn(target, prop)
+        const isOk = Reflect.deleteProperty(target, prop)
+        if (hasProp && isOk) {
+          dependency.trigger(prop)
+        }
+        return isOk
+      },
       get: (target, prop, receiver) => {
-        if (prop === Reactive.#MagicProps.REACTIVE_SYMBOL) {
+        if (prop === MagicProps.REACTIVE_SYMBOL) {
           return true
         }
-        if (prop === Reactive.#MagicProps.TRACK_ALL) {
-          return this.#dependency.trackAll()
+        if (prop === MagicProps.TRACK_ALL) {
+          return dependency.trackAll()
         }
         const value = Reflect.get(target, prop, receiver)
-        // @ts-expect-error проигнорировать ошибку типизации:
-        // невозможно гарантировать, что prop является ключом target.
-        this.#dependency.track(prop)
-        return isObject(value) ? Reactive.new(value) : value
+        dependency.track(prop)
+        return isObject(value) && !isArray(value) ? Reactive.new(value) : value
+      },
+      has: (target, prop) => {
+        dependency.track(prop)
+        return Reflect.has(target, prop)
       },
       set: (target, prop, value, receiver) => {
         // @ts-expect-error проигнорировать ошибку типизации:
         // невозможно гарантировать, что prop является ключом target.
         const oldValue = target[prop]
-        const result = Reflect.set(target, prop, value, receiver)
+        const isOk = Reflect.set(target, prop, value, receiver)
         if (
           oldValue !== value &&
           !Number.isNaN(oldValue) &&
           !Number.isNaN(value)
         ) {
-          // @ts-expect-error проигнорировать ошибку типизации:
-          // невозможно гарантировать, что prop является ключом target.
-          this.#dependency.trigger(prop)
+          dependency.trigger(prop)
         }
-        return result
+        return isOk
       }
     })
   }

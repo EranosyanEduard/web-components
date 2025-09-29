@@ -1,7 +1,13 @@
-import kebabCase from 'es-toolkit/compat/kebabCase'
+import _kebabCase from 'es-toolkit/compat/kebabCase'
 import Component from './Component'
 import type { ComponentOptions } from './typedef'
 
+/**
+ * Создать веб-компонент.
+ * @returns конструктор веб-компонента.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 function defineComponent<
   Props extends Record<string, unknown> = Record<string, unknown>,
   Emits extends string = string
@@ -12,7 +18,7 @@ function defineComponent<
       super(options)
     }
   }
-  customElements.define(kebabCase(name), Component_)
+  customElements.define(_kebabCase(name), Component_)
   return Component_
 }
 

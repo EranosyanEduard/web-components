@@ -1,13 +1,17 @@
 import { isObject } from 'es-toolkit/compat'
-import mapValues from 'es-toolkit/compat/mapValues'
+import _mapValues from 'es-toolkit/compat/mapValues'
 import { type html, render } from 'lit-html'
 import { reactive, watchEffect } from '../../reactivity'
 import type { Getter } from '../../typedef'
 import { setCurrentInstance } from './current_instance'
 import Prop from './Prop'
-import { getParentInstance, setParentInstance } from './parent_instance'
-import type { ComponentOptions, CurrentInstance } from './typedef'
+import type { ComponentOptions, CurrentInstance, PropsOptions } from './typedef'
 
+/**
+ * Веб-компонент.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 class Component<
     Props extends Record<string, unknown> = Record<string, unknown>,
     Emits extends string = string
@@ -16,10 +20,6 @@ class Component<
   implements CurrentInstance<Props, Emits>
 {
   readonly $options: CurrentInstance<Props, Emits>['$options']
-
-  readonly #root: this | ShadowRoot
-
-  readonly #template: Getter<ReturnType<typeof html>>
 
   /** created */
   constructor(componentOptions: ComponentOptions<Props, Emits>) {
@@ -33,18 +33,14 @@ class Component<
         onUnmounted: new Set(),
         onUpdated: new Set()
       },
-      parent: getParentInstance(),
+      props: this.#defineProps(componentOptions.props),
       provides: new Map()
     }
-    this.#root = this.#defineRoot()
-    this.#template = this.#defineTemplate()
-    this.$options.hooks.onMounted.add(this.#defineRender.bind(this))
-    this.#useLifecycleHooks({ hook: 'onBeforeMount' })
   }
 
   /** mounted */
   connectedCallback(): void {
-    this.#useLifecycleHooks({ hook: 'onMounted' })
+    this.#defineRender()
   }
 
   /** destroyed */
@@ -52,38 +48,40 @@ class Component<
     this.#useLifecycleHooks({ hook: 'onUnmounted' })
   }
 
-  #defineProps(): Props {
+  #defineProps(propsOptions?: PropsOptions<Props>): Props {
     const props = reactive({})
     Object.defineProperties(
       this,
-      mapValues(
-        this.$options.componentOptions.props,
-        (propOptions, propName) => {
-          const prop = new Prop(propName, propOptions)
-          const valueOrDefault = (propValue: unknown): Props[keyof Props] => {
+      _mapValues(propsOptions, (propOptions, propName) => {
+        const prop = new Prop(propName, propOptions)
+        const valueOrDefault = (propValue: unknown): Props[keyof Props] => {
+          // @ts-expect-error проигнорировать ошибку типизации:
+          // невозможно гарантировать, что значение propValue
+          // соответствует возвращаемому типу функции, но в данном
+          // случае это не повлияет на корректность работы кода.
+          return propValue ?? prop.options.default()
+        }
+        if (!prop.options.required) {
+          // @ts-expect-error проигнорировать ошибку типизации:
+          // propName станет ключом props при выполнении программы.
+          props[propName] = valueOrDefault(null)
+        }
+        return {
+          get: () => {
             // @ts-expect-error проигнорировать ошибку типизации:
-            // невозможно гарантировать, что значение propValue
-            // соответствует возвращаемому типу функции, но в данном
-            // случае это не повлияет на корректность работы кода.
-            return propValue ?? prop.options.default()
-          }
-          return {
-            get: () => {
+            // propName станет ключом props при выполнении программы.
+            return valueOrDefault(props[propName])
+          },
+          set: (propValue: unknown) => {
+            const propValue_ = valueOrDefault(propValue)
+            if (prop.options.validator(propValue_)) {
               // @ts-expect-error проигнорировать ошибку типизации:
-              // propName станет ключом props при выполнении программы.
-              return valueOrDefault(props[propName])
-            },
-            set: (propValue: unknown) => {
-              const propValue_ = valueOrDefault(propValue)
-              if (prop.options.validator(propValue_)) {
-                // @ts-expect-error проигнорировать ошибку типизации:
-                // см. комментарий в методе `get`.
-                props[propName] = propValue_
-              }
+              // см. комментарий в методе `get`.
+              props[propName] = propValue_
             }
           }
         }
-      )
+      })
     )
     // @ts-expect-error проигнорировать ошибку типизации:
     // код метода должен гарантировать соответствие значения
@@ -92,30 +90,28 @@ class Component<
   }
 
   #defineRender(): void {
+    const root = this.#defineRoot()
+    const template = this.#defineTemplate()
     let rendered = false
-    watchEffect(() => {
-      // @ts-expect-error проигнорировать ошибку типизации:
-      // невозможно устранить ошибку типизации, но в данном
-      // случае это не повлияет на корректность работы кода.
-      setParentInstance(this)
+    const effect: VoidFunction = () => {
       if (rendered) {
         this.#useLifecycleHooks({
           clear: false,
           hook: 'onBeforeUpdate'
         })
       }
-      render(this.#template(), this.#root)
+      render(template(), root)
       if (rendered) {
         this.#useLifecycleHooks({
           clear: false,
           hook: 'onUpdated'
         })
-        setParentInstance(null)
-      } else {
-        setParentInstance(this.$options.parent)
       }
       rendered = true
-    })
+    }
+    this.#useLifecycleHooks({ hook: 'onBeforeMount' })
+    watchEffect(effect)
+    this.#useLifecycleHooks({ hook: 'onMounted' })
   }
 
   #defineRoot(): this | ShadowRoot {
@@ -130,7 +126,7 @@ class Component<
     // случае это не повлияет на корректность работы кода.
     setCurrentInstance(this)
     try {
-      return this.$options.componentOptions.setup(this.#defineProps(), {
+      return this.$options.componentOptions.setup(this.$options.props, {
         emit: this.#emit.bind(this)
       })
     } finally {

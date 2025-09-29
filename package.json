@@ -11,7 +11,7 @@
     "eslint": "eslint",
     "lefthook": "lefthook",
     "preview": "vite preview",
-    "test": "vitest --typecheck"
+    "test": "vitest --typecheck --watch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

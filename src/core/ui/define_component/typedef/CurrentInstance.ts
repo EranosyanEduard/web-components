@@ -1,4 +1,3 @@
-import type { Maybe } from '../../../typedef'
 import type { ComponentOptions } from './Component'
 
 export interface CurrentInstance<
@@ -14,7 +13,7 @@ export interface CurrentInstance<
       readonly onUnmounted: Set<VoidFunction>
       readonly onUpdated: Set<VoidFunction>
     }
-    readonly parent: Maybe<CurrentInstance<Record<string, unknown>, string>>
+    readonly props: Props
     readonly provides: Map<symbol, unknown>
   }
 }
