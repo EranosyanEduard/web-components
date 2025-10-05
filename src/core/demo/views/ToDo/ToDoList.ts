@@ -31,8 +31,8 @@ export default defineComponent({
               ${todo.text}
               <div>
                 <v-btn
-                  .text=${true}
-                  .disabled=${todo.complete}
+                  .:text=${true}
+                  .:disabled=${todo.complete}
                   @click=${() => {
                     onComplete(index)
                   }}
@@ -40,8 +40,8 @@ export default defineComponent({
                   +
                 </v-btn>
                 <v-btn
-                  .text=${true}
-                  .disabled=${todo.complete}
+                  .:text=${true}
+                  .:disabled=${todo.complete}
                   @click=${() => {
                     onDelete(index)
                   }}

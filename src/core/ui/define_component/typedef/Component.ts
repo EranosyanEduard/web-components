@@ -2,6 +2,11 @@ import type { html } from 'lit-html'
 import type { Getter } from '../../../typedef'
 import type { PropsOptions } from './Props'
 
+/**
+ * Конфигурация веб-компонента.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 export interface ComponentOptions<
   Props extends Record<string, unknown>,
   Emits extends string

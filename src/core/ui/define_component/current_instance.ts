@@ -5,6 +5,7 @@ type MaybeCurrentInstance = Maybe<
   CurrentInstance<Record<string, unknown>, string>
 >
 let instance: MaybeCurrentInstance = null
+/** Текущий экземпляр веб-компонента */
 const currentInstance: Accessor<MaybeCurrentInstance> = {
   get: () => instance,
   set: (context) => {

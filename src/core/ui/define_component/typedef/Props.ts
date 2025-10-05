@@ -2,6 +2,11 @@ import type { MarkRequired, StrictOmit } from 'ts-essentials'
 import type { Getter, Predicate } from '../../../typedef'
 
 export type PropConstructor<T> = (...args: any) => T
+/**
+ * Уточнить тип _props_-а веб-компонента (_type assertion_).
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 export type PropType<T> = PropConstructor<T> | ReadonlyArray<PropConstructor<T>>
 export interface AllPropOptions<T, Required extends boolean = boolean> {
   readonly default?: Getter<T>
@@ -18,6 +23,11 @@ export type RequiredPropOptions<T> = MarkRequired<
   'required'
 >
 export type PropOptions<T> = RequiredPropOptions<T> | DefaultPropOptions<T>
+/**
+ * Конфигурация _props_-ов веб-компонента.
+ * @since 1.0.0
+ * @version 1.0.0
+ */
 export type PropsOptions<Props extends Record<string, unknown>> = {
   readonly [P in keyof Props]: PropOptions<Props[P]>
 }

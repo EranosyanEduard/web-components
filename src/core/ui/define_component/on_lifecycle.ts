@@ -5,10 +5,10 @@ function onLifecycleHook(
   hook: keyof CurrentInstance<
     Record<string, unknown>,
     string
-  >['$options']['hooks']
+  >['$options']['setup']['hooks']
 ): (cb: VoidFunction) => void {
   return (cb) => {
-    getCurrentInstance()?.$options.hooks[hook].add(cb)
+    getCurrentInstance()?.$options.setup.hooks[hook].add(cb)
   }
 }
 const onBeforeMount = onLifecycleHook('onBeforeMount')

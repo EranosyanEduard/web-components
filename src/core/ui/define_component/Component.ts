@@ -1,11 +1,10 @@
-import { isObject } from 'es-toolkit/compat'
-import _mapValues from 'es-toolkit/compat/mapValues'
+import isObject from 'es-toolkit/compat/isObject'
 import { type html, render } from 'lit-html'
 import { reactive, watchEffect } from '../../reactivity'
 import type { Getter } from '../../typedef'
 import { setCurrentInstance } from './current_instance'
-import Prop from './Prop'
-import type { ComponentOptions, CurrentInstance, PropsOptions } from './typedef'
+import type Prop from './Prop'
+import type { ComponentOptions, CurrentInstance } from './typedef'
 
 /**
  * Веб-компонент.
@@ -22,19 +21,25 @@ class Component<
   readonly $options: CurrentInstance<Props, Emits>['$options']
 
   /** created */
-  constructor(componentOptions: ComponentOptions<Props, Emits>) {
+  constructor(args: {
+    readonly componentOptions: ComponentOptions<Props, Emits>
+    readonly propsOptions: { readonly [P in keyof Props]: Prop<Props[P]> }
+  }) {
+    const { componentOptions, propsOptions } = args
     super()
     this.$options = {
       componentOptions,
-      hooks: {
-        onBeforeMount: new Set(),
-        onBeforeUpdate: new Set(),
-        onMounted: new Set(),
-        onUnmounted: new Set(),
-        onUpdated: new Set()
-      },
-      props: this.#defineProps(componentOptions.props),
-      provides: new Map()
+      setup: {
+        hooks: {
+          onBeforeMount: new Set(),
+          onBeforeUpdate: new Set(),
+          onMounted: new Set(),
+          onUnmounted: new Set(),
+          onUpdated: new Set()
+        },
+        props: this.#defineProps(propsOptions),
+        provides: new Map()
+      }
     }
   }
 
@@ -48,45 +53,59 @@ class Component<
     this.#useLifecycleHooks({ hook: 'onUnmounted' })
   }
 
-  #defineProps(propsOptions?: PropsOptions<Props>): Props {
-    const props = reactive({})
+  #defineProps(
+    propsOptions: { readonly [P in keyof Props]: Prop<Props[P]> }
+  ): Props {
+    const propsValues = new Proxy(reactive({}), {
+      get: (target, prop, receiver) => {
+        return (
+          Reflect.get(target, prop, receiver) ??
+          // @ts-expect-error проигнорировать ошибку типизации:
+          // prop станет ключом propsValues при выполнении программы.
+          propsOptions[prop].options.default()
+        )
+      },
+      set: (target, prop, newValue, receiver) => {
+        // @ts-expect-error проигнорировать ошибку типизации:
+        // см. коммент в методе get.
+        const propOptions = propsOptions[prop]
+        const propValue = newValue ?? propOptions.options.default()
+        return propOptions.options.validator(propValue)
+          ? Reflect.set(target, prop, newValue, receiver)
+          : false
+      }
+    })
     Object.defineProperties(
       this,
-      _mapValues(propsOptions, (propOptions, propName) => {
-        const prop = new Prop(propName, propOptions)
-        const valueOrDefault = (propValue: unknown): Props[keyof Props] => {
-          // @ts-expect-error проигнорировать ошибку типизации:
-          // невозможно гарантировать, что значение propValue
-          // соответствует возвращаемому типу функции, но в данном
-          // случае это не повлияет на корректность работы кода.
-          return propValue ?? prop.options.default()
-        }
-        if (!prop.options.required) {
-          // @ts-expect-error проигнорировать ошибку типизации:
-          // propName станет ключом props при выполнении программы.
-          props[propName] = valueOrDefault(null)
-        }
-        return {
-          get: () => {
-            // @ts-expect-error проигнорировать ошибку типизации:
-            // propName станет ключом props при выполнении программы.
-            return valueOrDefault(props[propName])
-          },
-          set: (propValue: unknown) => {
-            const propValue_ = valueOrDefault(propValue)
-            if (prop.options.validator(propValue_)) {
+      Object.keys(propsOptions).reduce<Record<string, PropertyDescriptor>>(
+        (acc, propName) => {
+          const propOptions = propsOptions[propName]
+          acc[`:${propName}`] = {
+            get: () => {
               // @ts-expect-error проигнорировать ошибку типизации:
-              // см. комментарий в методе `get`.
-              props[propName] = propValue_
+              // propName станет ключом propsValues при выполнении программы.
+              return propsValues[propName]
+            },
+            set: (propValue: unknown) => {
+              // @ts-expect-error проигнорировать ошибку типизации:
+              // см. коммент в методе get.
+              propsValues[propName] = propValue
             }
           }
-        }
-      })
+          if (!propOptions.options.required) {
+            // @ts-expect-error проигнорировать ошибку типизации:
+            // см. коммент к методу get PropertyDescriptor.
+            propsValues[propName] = propOptions.options.default()
+          }
+          return acc
+        },
+        {}
+      )
     )
     // @ts-expect-error проигнорировать ошибку типизации:
     // код метода должен гарантировать соответствие значения
     // props возвращаемому типу.
-    return props
+    return propsValues
   }
 
   #defineRender(): void {
@@ -115,40 +134,55 @@ class Component<
   }
 
   #defineRoot(): this | ShadowRoot {
-    return isObject(this.$options.componentOptions.shadowRootConfig)
-      ? this.attachShadow(this.$options.componentOptions.shadowRootConfig)
+    const {
+      componentOptions: { shadowRootConfig }
+    } = this.$options
+    return isObject(shadowRootConfig)
+      ? this.attachShadow(shadowRootConfig)
       : this
   }
 
   #defineTemplate(): Getter<ReturnType<typeof html>> {
+    const {
+      componentOptions: { setup },
+      setup: { props }
+    } = this.$options
     // @ts-expect-error проигнорировать ошибку типизации:
     // невозможно устранить ошибку типизации, но в данном
     // случае это не повлияет на корректность работы кода.
     setCurrentInstance(this)
     try {
-      return this.$options.componentOptions.setup(this.$options.props, {
-        emit: this.#emit.bind(this)
-      })
+      return setup(props, { emit: this.#emit.bind(this) })
     } finally {
       setCurrentInstance(null)
     }
   }
 
   #emit(eventType: Emits, detail?: unknown) {
-    if (!this.$options.componentOptions.emits?.includes(eventType)) return
-    this.dispatchEvent(new CustomEvent(eventType, { detail }))
+    const {
+      componentOptions: { emits = [] }
+    } = this.$options
+    if (emits.includes(eventType)) {
+      this.dispatchEvent(new CustomEvent(eventType, { detail }))
+    }
   }
 
   #useLifecycleHooks(args: {
     readonly clear?: boolean
-    readonly hook: keyof CurrentInstance<Props, Emits>['$options']['hooks']
+    readonly hook: keyof CurrentInstance<
+      Props,
+      Emits
+    >['$options']['setup']['hooks']
   }) {
     const { clear = true, hook } = args
-    const hooks = this.$options.hooks[hook]
-    hooks.forEach((it) => {
-      it()
+    const {
+      setup: { hooks }
+    } = this.$options
+    const concreteHooks = hooks[hook]
+    concreteHooks.forEach((hook_) => {
+      hook_()
     })
-    if (clear) hooks.clear()
+    if (clear) concreteHooks.clear()
   }
 }
 

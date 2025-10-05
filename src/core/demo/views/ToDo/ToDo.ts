@@ -39,18 +39,18 @@ export default defineComponent({
     return () => html`
       <div>
         <v-input
-          .value=${todoInput.value}
+          .:value=${todoInput.value}
           @input=${oninputTodo}
         ></v-input>
         <v-btn
-          .disabled=${disabledTodoBtn.value}
+          .:disabled=${disabledTodoBtn.value}
           @click=${todoApi.create}
         >
           Добавить
         </v-btn>
       </div>
       <to-do-list
-        .items=${todoList.value}
+        .:items=${todoList.value}
         @delete=${todoApi.delete}
         @complete=${todoApi.update}
       ></todo-list>
