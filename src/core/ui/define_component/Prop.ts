@@ -7,6 +7,7 @@ import isFunction from 'es-toolkit/compat/isFunction'
 import isNumber from 'es-toolkit/compat/isNumber'
 import isObject from 'es-toolkit/compat/isObject'
 import isString from 'es-toolkit/compat/isString'
+import type { MarkOptional } from 'ts-essentials'
 import type { Predicate } from '../../typedef'
 import type { AllPropOptions, PropConstructor, PropOptions } from './typedef'
 import { PropTypeError } from './utils'
@@ -48,7 +49,7 @@ class Prop<T> {
     [String, isString]
   ])
 
-  readonly options: Required<AllPropOptions<T>>
+  readonly options: MarkOptional<Required<AllPropOptions<T>>, 'reflector'>
 
   constructor(name: string, options: PropOptions<T>) {
     const {
@@ -56,6 +57,7 @@ class Prop<T> {
       default: default_ = () => {
         assert(false, `Значение props-а ${name} по умолчанию не определено`)
       },
+      reflector,
       required = false,
       validator = () => true
     } = options as AllPropOptions<T>
@@ -67,6 +69,7 @@ class Prop<T> {
     this.options = {
       default: defaultValue,
       type,
+      reflector,
       required,
       validator: Prop.#defineValidator(name, {
         type,

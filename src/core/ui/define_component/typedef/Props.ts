@@ -10,6 +10,7 @@ export type PropConstructor<T> = (...args: any) => T
 export type PropType<T> = PropConstructor<T> | ReadonlyArray<PropConstructor<T>>
 export interface AllPropOptions<T, Required extends boolean = boolean> {
   readonly default?: Getter<T>
+  readonly reflector?: (value: T) => string
   readonly required?: Required
   readonly type: PropType<T>
   readonly validator?: Predicate<T>

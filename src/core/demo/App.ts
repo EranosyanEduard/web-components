@@ -4,8 +4,9 @@ import './components'
 import './views'
 
 export default defineComponent({
-  name: 'VApp',
+  name: 'MyApp',
+  shadowRootConfig: { mode: 'open' },
   setup() {
-    return () => html`<to-do></to-do>`
+    return () => html`<v-app>Hello, World!</v-app>`
   }
 })

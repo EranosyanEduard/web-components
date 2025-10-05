@@ -1,3 +1,4 @@
+import isFunction from 'es-toolkit/compat/isFunction'
 import isObject from 'es-toolkit/compat/isObject'
 import { type html, render } from 'lit-html'
 import { reactive, watchEffect } from '../../reactivity'
@@ -70,9 +71,15 @@ class Component<
         // см. коммент в методе get.
         const propOptions = propsOptions[prop]
         const propValue = newValue ?? propOptions.options.default()
-        return propOptions.options.validator(propValue)
-          ? Reflect.set(target, prop, newValue, receiver)
-          : false
+        if (propOptions.options.validator(propValue)) {
+          if (isFunction(propOptions.options.reflector)) {
+            // @ts-expect-error проигнорировать ошибку типизации:
+            // см. коммент в методе get.
+            this.setAttribute(prop, propOptions.options.reflector(newValue))
+          }
+          return Reflect.set(target, prop, newValue, receiver)
+        }
+        return false
       }
     })
     Object.defineProperties(
