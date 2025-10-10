@@ -1,17 +1,7 @@
 {
-  "name": "web-components",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "build": "tsc && vite build",
-    "check": "npx @biomejs/biome check --write && eslint --no-warn-ignored",
-    "dev": "vite",
-    "devcontainer:dev": "vite --host",
-    "eslint": "eslint",
-    "lefthook": "lefthook",
-    "preview": "vite preview",
-    "test": "vitest --typecheck --watch"
+  "dependencies": {
+    "es-toolkit": "^1.39.10",
+    "lit-html": "^3.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
@@ -28,8 +18,19 @@
     "vite": "^7.1.6",
     "vitest": "^3.2.4"
   },
-  "dependencies": {
-    "es-toolkit": "^1.39.10",
-    "lit-html": "^3.3.1"
-  }
+  "name": "web-components",
+  "private": true,
+  "scripts": {
+    "build": "tsc && vite build",
+    "check": "npx @biomejs/biome check --write && eslint --no-warn-ignored",
+    "dev": "vite",
+    "devcontainer:dev": "vite --host",
+    "eslint": "eslint",
+    "lefthook": "lefthook",
+    "postinstall": "lefthook install",
+    "preview": "vite preview",
+    "test": "vitest --typecheck --watch"
+  },
+  "type": "module",
+  "version": "0.0.0"
 }
