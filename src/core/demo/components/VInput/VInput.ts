@@ -19,7 +19,7 @@ export default defineComponent({
     }
   },
   emits: ['input'],
-  shadowRootConfig: { mode: 'closed' },
+  shadowRootConfig: { mode: 'open' },
   setup(props, { emit }) {
     const oninput = (event: Event): void => {
       event.stopPropagation()

@@ -11,12 +11,12 @@ export default defineComponent({
   props: {
     dark: {
       default: () => false,
-      reflector: (value) => value.toString(),
+      reflector: String,
       type: Boolean
     },
     light: {
       default: () => false,
-      reflector: (value) => value.toString(),
+      reflector: String,
       type: Boolean
     }
   },

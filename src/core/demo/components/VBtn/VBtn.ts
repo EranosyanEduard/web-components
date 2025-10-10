@@ -14,11 +14,8 @@ export default defineComponent({
       type: String as PropType<'button' | 'submit' | 'reset'>
     }
   },
-  shadowRootConfig: { mode: 'closed' },
+  shadowRootConfig: { mode: 'open' },
   setup(props) {
-    console.log('props', props)
-    console.log('props.disabled', props.disabled)
-    console.log('props.type', props.type)
     return () => html`
       <button
         ?disabled=${props.disabled}
