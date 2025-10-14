@@ -1,5 +1,4 @@
 import { describe, expect, it, type Mock, vi } from 'vitest'
-import type { Maybe } from '../../../typedef'
 import Effect from '../Effect'
 
 describe('тестовый набор класса `Effect`', () => {
@@ -22,9 +21,9 @@ describe('тестовый набор класса `Effect`', () => {
     expect.hasAssertions()
 
     const effect = new Effect(vi.fn<never>())
-    const ondestroyListeners: ReadonlyArray<Mock<(effect: Effect) => void>> = [
-      vi.fn<(effect: Effect) => void>(),
-      vi.fn<(effect: Effect) => void>()
+    const ondestroyListeners: ReadonlyArray<Mock<(e: Effect) => void>> = [
+      vi.fn<(e: Effect) => void>(),
+      vi.fn<(e: Effect) => void>()
     ]
     ondestroyListeners.forEach((ondestroy) => {
       effect.ondestroy(ondestroy)
@@ -41,9 +40,9 @@ describe('тестовый набор класса `Effect`', () => {
     expect.hasAssertions()
 
     const effect = new Effect(vi.fn<never>())
-    const ondestroyListeners: ReadonlyArray<Mock<(effect: Effect) => void>> = [
-      vi.fn<(effect: Effect) => void>(),
-      vi.fn<(effect: Effect) => void>()
+    const ondestroyListeners: ReadonlyArray<Mock<(e: Effect) => void>> = [
+      vi.fn<(e: Effect) => void>(),
+      vi.fn<(e: Effect) => void>()
     ]
     const stopEffect = effect.use()
     ondestroyListeners.forEach((ondestroy) => {
@@ -63,26 +62,23 @@ describe('тестовый набор класса `Effect`', () => {
     эффектов`, () => {
     expect.hasAssertions()
 
-    let effect_: Maybe<Effect> = null
-    const effect = new Effect(() => {
-      effect_ = Effect.current
-    })
+    const spyEffect = vi.fn<(e: Effect) => void>()
+    const effect = new Effect(() => spyEffect(Effect.getActive()))
     effect.use()
 
-    expect(effect_).toBeInstanceOf(Effect)
-    expect(Effect.current).toBeNull()
+    expect(spyEffect.mock.lastCall?.[0]).toBeInstanceOf(Effect)
+    expect(Effect.getActive()).toBeNull()
   })
 
   it(`должен сбросить глобальный контекст эффектов, даже если пользовательский
     эффект спровоцировал исключение`, () => {
     expect.hasAssertions()
-
-    const effect_ = vi.fn<() => never>().mockImplementationOnce(() => {
-      throw new Error('Ошибка в пользовательском эффекте')
-    })
-    const effect = new Effect(effect_)
-
-    expect(() => effect.use()).toThrow('Ошибка в пользовательском эффекте')
-    expect(Effect.current).toBeNull()
+    expect(() => {
+      const effect = new Effect(() => {
+        throw new Error('Ошибка в пользовательском эффекте')
+      })
+      effect.use()
+    }).toThrow('Ошибка в пользовательском эффекте')
+    expect(Effect.getActive()).toBeNull()
   })
 })

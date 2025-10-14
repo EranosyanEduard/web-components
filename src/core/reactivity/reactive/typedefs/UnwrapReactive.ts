@@ -1,5 +1,5 @@
-declare const ReactiveSymbol: unique symbol
-export type Reactive<T extends object> = T & { readonly [ReactiveSymbol]: true }
+import type { Reactive } from './Reactive'
+
 /**
  * Распаковать реактивный объект.
  * @since 1.0.0
@@ -7,7 +7,7 @@ export type Reactive<T extends object> = T & { readonly [ReactiveSymbol]: true }
  * @example
  * const counter = reactive({ value: 0 })
  * type Counter = UnwrapReactive<typeof counter>
- * //   ^ { value: number }
+ * //   ^? { value: number }
  */
 export type UnwrapReactive<T extends Reactive<object>> = T extends Reactive<
   infer U

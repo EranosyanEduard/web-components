@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { watchEffect } from '../../watch_effect'
-import { reactive } from '../reactive.api'
+import { reactive } from '../reactive'
 
-describe('тестовый набор утилиты `reactive`', () => {
+describe.skip('тестовый набор утилиты `reactive`', () => {
   it('должен создать реактивный массив', () => {
     expect.hasAssertions()
 

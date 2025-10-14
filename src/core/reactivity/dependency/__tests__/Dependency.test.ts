@@ -1,3 +1,4 @@
+import type { Dictionary } from 'ts-essentials'
 import { describe, expect, it, vi } from 'vitest'
 import { Effect } from '../../effect'
 import Dependency from '../Dependency'
@@ -9,7 +10,7 @@ describe('тестовый набор класса `Dependency`', () => {
     const Key = Object.freeze({
       TRACKED_PROP: Symbol(),
       UNTRACKED_PROP: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP)
@@ -32,7 +33,7 @@ describe('тестовый набор класса `Dependency`', () => {
 
     const Key = Object.freeze({
       TRACKED_PROP: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP)
@@ -53,7 +54,7 @@ describe('тестовый набор класса `Dependency`', () => {
 
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effectA_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP_A)
@@ -79,7 +80,7 @@ describe('тестовый набор класса `Dependency`', () => {
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol(),
       TRACKED_PROP_B: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependencyA = new Dependency()
     const dependencyB = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() => {
@@ -105,14 +106,14 @@ describe('тестовый набор класса `Dependency`', () => {
 
     const Key = Object.freeze({
       TRACKED_PROP: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP)
     )
+    // Умышленно создать неиспользуемый эффект.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const effect = new Effect(effect_)
-    // "шпион" позволяет устранить недостатки, указанные линтером.
-    vi.spyOn(effect, 'use')
     dependency.trigger(Key.TRACKED_PROP)
     dependency.trigger(Key.TRACKED_PROP)
     dependency.trigger(Key.TRACKED_PROP)
@@ -126,7 +127,7 @@ describe('тестовый набор класса `Dependency`', () => {
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol(),
       TRACKED_PROP_B: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effectA_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP_A)
@@ -151,13 +152,43 @@ describe('тестовый набор класса `Dependency`', () => {
     expect(effectAll_).toHaveBeenCalledTimes(5)
   })
 
+  it('должен спровоцировать изменения всех свойств', () => {
+    expect.hasAssertions()
+
+    const Key = Object.freeze({
+      TRACKED_PROP_A: Symbol(),
+      TRACKED_PROP_B: Symbol()
+    } satisfies Dictionary<symbol>)
+    const dependency = new Dependency()
+    const effectA_ = vi.fn<VoidFunction>(() =>
+      dependency.track(Key.TRACKED_PROP_A)
+    )
+    const effectA = new Effect(effectA_)
+    const effectB_ = vi.fn<VoidFunction>(() =>
+      dependency.track(Key.TRACKED_PROP_B)
+    )
+    const effectB = new Effect(effectB_)
+    const effectAll_ = vi.fn<VoidFunction>(() => dependency.trackAll())
+    const effectAll = new Effect(effectAll_)
+    effectA.use()
+    effectB.use()
+    effectAll.use()
+    dependency.triggerAll()
+    dependency.triggerAll()
+    dependency.triggerAll()
+
+    expect(effectA_).toHaveBeenCalledTimes(1)
+    expect(effectB_).toHaveBeenCalledTimes(1)
+    expect(effectAll_).toHaveBeenCalledTimes(4)
+  })
+
   it('не должен прекращать отслеживание изменения свойств зависимости', () => {
     expect.hasAssertions()
 
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol(),
       TRACKED_PROP_B: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effectA_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP_A)

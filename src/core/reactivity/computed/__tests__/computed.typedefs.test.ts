@@ -3,7 +3,7 @@ import type {
   ComputedRef,
   UnwrapComputedRef,
   WritableComputedRef
-} from '../typedef'
+} from '../typedefs'
 
 describe('тестовый набор типов `ComputedRef`', () => {
   it(`должен "распаковать" вычисляемое значение`, () => {

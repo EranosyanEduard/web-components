@@ -1,55 +1,56 @@
-import isFunction from 'es-toolkit/compat/isFunction'
-import noop from 'es-toolkit/compat/noop'
-import type { Accessor, Getter } from '../../typedef'
-import { type Ref, ref } from '../ref'
-import { watchEffect } from '../watch_effect'
-import type { ComputedRef, WritableComputedRef } from './typedef'
+import Computed from './Computed.impl'
 
 /**
- * Вычисляемое значение.
+ * Предикат, проверяющий является ли полученный аргумент вычисляемым значением.
+ * @param value произвольное значение
+ * @returns `true`, если `value` - вычисляемое значение, иначе - `false`
  * @since 1.0.0
  * @version 1.0.0
+ * @example
+ * isComputed(computed(() => 0))               // -> true
+ * isComputed(reactive({ value: 0 }))          // -> false
+ * isComputed(ref(0))                          // -> false
+ * isComputed(() => 0)                         // -> false
+ * isComputed({ get: () => 0, set: () => {} }) // -> false
+ * isComputed({ value: 0 })                    // -> false
  */
-class Computed<T> {
-  static isComputed(value: unknown): value is ComputedRef<unknown> {
-    return value instanceof Computed
-  }
+const isComputed = Computed.isComputed
+/**
+ * Создать вычисляемое значение.
+ * @param value функция или свойство доступа
+ * @returns вычисляемое значение
+ * @since 1.0.0
+ * @version 1.0.0
+ * @example
+ * <caption>Функциональное вычисляемое значение</caption>
+ * const counter = ref(0)
+ * const computedCounter = computed(() => `count is ${counter.value}`)
+ * watchEffect(() => {
+ *   console.log(computedCounter)
+ * })
+ * counter.value++ // -> count is 1
+ * counter.value++ // -> count is 2
+ * counter.value++ // -> count is 3
+ * counter.value = 3
+ * counter.value = 3
+ * counter.value = 3
+ * @example
+ * <caption>Объектное вычисляемое значение</caption>
+ * const counter = ref(0)
+ * const computedCounter = computed<number>({
+ *   get: () => counter.value,
+ *   set: (value) => (counter.value = value)
+ * })
+ * watchEffect(() => {
+ *   console.log(`count is ${computedCounter}`)
+ * })
+ * counter.value++ // -> count is 1
+ * counter.value++ // -> count is 2
+ * counter.value++ // -> count is 3
+ * counter.value = 3
+ * counter.value = 3
+ * counter.value = 3
+ */
+const computed = Computed.new
 
-  static new<T>(value: Accessor<T>): WritableComputedRef<T>
-  static new<T>(value: Getter<T>): ComputedRef<T>
-  static new<T>(
-    value: Accessor<T> | Getter<T>
-  ): WritableComputedRef<T> | ComputedRef<T> {
-    // @ts-expect-error проигнорировать ошибку типизации:
-    // значение, возвращаемое методом будет соответствовать
-    // типам WritableComputedRef<T> | ComputedRef<T>.
-    return new Computed(value)
-  }
-
-  readonly #accessor: Accessor<T>
-
-  readonly #refValue: Ref<T>
-
-  private constructor(accessor: Accessor<T> | Getter<T>) {
-    this.#accessor = isFunction(accessor)
-      ? { get: accessor, set: noop }
-      : accessor
-    // @ts-expect-error проигнорировать ошибку типизации:
-    // значение undefined будет немедленно заменено в watchEffect
-    // на значение корректного типа.
-    this.#refValue = ref(undefined)
-    watchEffect(() => {
-      this.#refValue.value = this.#accessor.get()
-    })
-  }
-
-  get value(): T {
-    return this.#refValue.value
-  }
-
-  set value(newValue: T) {
-    this.#accessor.set(newValue)
-  }
-}
-
-export default Computed
+export { computed, isComputed }

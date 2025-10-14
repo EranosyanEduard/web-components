@@ -1,2 +1,2 @@
-export * from './computed.api'
-export type * from './typedef'
+export * from './computed'
+export type * from './typedefs'

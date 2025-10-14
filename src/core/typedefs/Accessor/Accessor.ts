@@ -16,8 +16,8 @@
  * }
  */
 export interface Accessor<T> {
-  readonly get: Getter<T>
-  readonly set: Setter<T>
+  readonly get: AccessorGet<T>
+  readonly set: AccessorSet<T>
 }
-export type Getter<T> = () => T
-export type Setter<T> = (value: T) => void
+export type AccessorGet<T> = () => T
+export type AccessorSet<T> = (value: T) => void

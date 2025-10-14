@@ -1,2 +1,2 @@
-export * from './reactive.api'
-export type * from './typedef'
+export * from './reactive'
+export type * from './typedefs'

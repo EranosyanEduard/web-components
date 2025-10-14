@@ -1,10 +1,12 @@
 import isEmpty from 'es-toolkit/compat/isEmpty'
 import isNull from 'es-toolkit/compat/isNull'
+import type { Dictionary } from 'ts-essentials'
 import { Effect } from '../effect'
 
-const MagicProps = Object.freeze({
+/** Коллекция служебных ключей */
+const MagicPropertyKey = Object.freeze({
   TRACK_ALL: Symbol()
-} satisfies Record<string, symbol>)
+} satisfies Dictionary<symbol>)
 
 /**
  * Хранилище эффектов, необходимое для реализации системы реактивности.
@@ -12,57 +14,61 @@ const MagicProps = Object.freeze({
  * @version 1.0.0
  */
 class Dependency {
-  readonly #effects = new Map<PropertyKey, Set<Effect>>()
+  readonly #effects: Map<PropertyKey, Set<Effect>>
 
-  readonly #ondestroyEffects = new WeakMap<Effect, Set<PropertyKey>>()
+  readonly #ondestroyEffects: WeakMap<Effect, Set<PropertyKey>>
 
-  track(prop: PropertyKey): void {
-    if (isNull(Effect.current)) return
-    if (this.#effects.has(prop)) {
-      this.#effects.get(prop)?.add(Effect.current)
+  constructor() {
+    this.#effects = new Map()
+    this.#ondestroyEffects = new WeakMap()
+  }
+
+  track(p: PropertyKey): void {
+    const activeEffect = Effect.getActive()
+    if (isNull(activeEffect)) return
+    if (this.#effects.has(p)) {
+      this.#effects.get(p)?.add(activeEffect)
     } else {
-      this.#effects.set(prop, new Set([Effect.current]))
+      this.#effects.set(p, new Set([activeEffect]))
     }
-    this.#ondestroyEffect({
-      effect: Effect.current,
-      prop
-    })
+    this.#ondestroyEffect({ e: activeEffect, p })
   }
 
   trackAll(): void {
-    this.track(MagicProps.TRACK_ALL)
+    this.track(MagicPropertyKey.TRACK_ALL)
   }
 
-  trigger(prop: PropertyKey): void {
-    if (!this.#effects.has(prop) && !this.#effects.has(MagicProps.TRACK_ALL)) {
-      return
-    }
-    this.#effects.get(prop)?.forEach((effect) => {
-      effect.use()
+  trigger(p: PropertyKey): void {
+    this.#effects.get(p)?.forEach((e) => {
+      e.use()
     })
-    this.#effects.get(MagicProps.TRACK_ALL)?.forEach((effect) => {
-      effect.use()
+    this.triggerAll()
+  }
+
+  triggerAll(): void {
+    this.#effects.get(MagicPropertyKey.TRACK_ALL)?.forEach((e) => {
+      e.use()
     })
   }
 
   #ondestroyEffect(args: {
-    readonly effect: Effect
-    readonly prop: PropertyKey
+    readonly e: Effect
+    readonly p: PropertyKey
   }): void {
-    const { effect, prop } = args
-    const effectForProps = this.#ondestroyEffects.get(effect) ?? new Set()
-    if (effectForProps.has(prop)) {
+    const { e, p } = args
+    const effectForProps = this.#ondestroyEffects.get(e) ?? new Set()
+    if (effectForProps.has(p)) {
       return
     }
-    this.#ondestroyEffects.set(effect, effectForProps.add(prop))
-    effect.ondestroy(() => {
-      if (!this.#effects.has(prop)) {
+    this.#ondestroyEffects.set(e, effectForProps.add(p))
+    e.ondestroy(() => {
+      if (!this.#effects.has(p)) {
         return
       }
-      const effectsForProp = this.#effects.get(prop)
-      effectsForProp?.delete(effect)
+      const effectsForProp = this.#effects.get(p)
+      effectsForProp?.delete(e)
       if (isEmpty(effectsForProp)) {
-        this.#effects.delete(prop)
+        this.#effects.delete(p)
       }
     })
   }

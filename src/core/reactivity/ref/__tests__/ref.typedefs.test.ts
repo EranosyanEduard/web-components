@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { Ref, UnwrapRef } from '../typedef'
+import type { Ref, UnwrapRef } from '../typedefs'
 
 describe('тестовый набор типов `Ref`', () => {
   it(`должен "распаковать" значение реактивного значения`, () => {

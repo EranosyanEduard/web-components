@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { Reactive, UnwrapReactive } from '../typedef'
+import type { Reactive, UnwrapReactive } from '../typedefs'
 
 describe('тестовый набор типов `Reactive`', () => {
   it(`должен "распаковать" значение реактивного объекта`, () => {

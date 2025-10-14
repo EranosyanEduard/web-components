@@ -2,23 +2,25 @@ import noop from 'es-toolkit/compat/noop'
 import type { AnyFunction } from 'ts-essentials'
 import { describe, expect, it, vi } from 'vitest'
 import { watchEffect } from '../../watch_effect'
-import { reactive } from '../reactive.api'
+import { reactive } from '../reactive'
 
 describe('тестовый набор утилиты `reactive`', () => {
   it('должен создать реактивный объект', () => {
     expect.hasAssertions()
 
     const counter = reactive({ value: 0 })
-    const noopAs: AnyFunction = noop
-    const effect_ = vi.fn<VoidFunction>(() => {
-      noopAs(counter.value)
-    })
-    watchEffect(effect_)
+    const processCounter = vi.fn<(counter: number) => void>()
+    watchEffect(() => processCounter(counter.value))
     counter.value++
     counter.value++
     counter.value++
 
-    expect(effect_).toHaveBeenCalledTimes(4)
+    expect(counter.value).toBe(3)
+    expect(processCounter).toHaveBeenCalledTimes(4)
+    expect(processCounter).toHaveBeenNthCalledWith(1, 0)
+    expect(processCounter).toHaveBeenNthCalledWith(2, 1)
+    expect(processCounter).toHaveBeenNthCalledWith(3, 2)
+    expect(processCounter).toHaveBeenNthCalledWith(4, 3)
   })
 
   it('должен создать "глубоко" реактивный объект', () => {
@@ -27,16 +29,18 @@ describe('тестовый набор утилиты `reactive`', () => {
     const counters = reactive({
       counterA: { value: 0 }
     })
-    const noopAs: AnyFunction = noop
-    const effect_ = vi.fn<VoidFunction>(() => {
-      noopAs(counters.counterA.value)
-    })
-    watchEffect(effect_)
+    const processCounter = vi.fn<(counter: number) => void>()
+    watchEffect(() => processCounter(counters.counterA.value))
     counters.counterA.value++
     counters.counterA.value++
     counters.counterA.value++
 
-    expect(effect_).toHaveBeenCalledTimes(4)
+    expect(counters.counterA.value).toBe(3)
+    expect(processCounter).toHaveBeenCalledTimes(4)
+    expect(processCounter).toHaveBeenNthCalledWith(1, 0)
+    expect(processCounter).toHaveBeenNthCalledWith(2, 1)
+    expect(processCounter).toHaveBeenNthCalledWith(3, 2)
+    expect(processCounter).toHaveBeenNthCalledWith(4, 3)
   })
 
   it(`должен иметь эффект, если свойство реактивного объекта,
@@ -44,15 +48,16 @@ describe('тестовый набор утилиты `reactive`', () => {
     expect.hasAssertions()
 
     const counter = reactive<{ value?: number }>({ value: 0 })
-    const noopAs: AnyFunction = noop
-    const effect_ = vi.fn<VoidFunction>(() => {
-      noopAs(counter.value)
-    })
-    watchEffect(effect_)
+    const processCounter = vi.fn<(counter?: number) => void>()
+    watchEffect(() => processCounter(counter.value))
     delete counter.value
     counter.value = 0
 
-    expect(effect_).toHaveBeenCalledTimes(3)
+    expect(counter.value).toBe(0)
+    expect(processCounter).toHaveBeenCalledTimes(3)
+    expect(processCounter).toHaveBeenNthCalledWith(1, 0)
+    expect(processCounter).toHaveBeenNthCalledWith(2, undefined)
+    expect(processCounter).toHaveBeenNthCalledWith(3, 0)
   })
 
   it.fails(
@@ -81,17 +86,18 @@ describe('тестовый набор утилиты `reactive`', () => {
     с помощью оператора "in"`, () => {
     expect.hasAssertions()
 
-    const counter = reactive({ value: 0 })
-    const noopAs: AnyFunction = noop
-    const effect_ = vi.fn<VoidFunction>(() => {
-      noopAs('value' in counter)
-    })
-    watchEffect(effect_)
-    counter.value++
-    counter.value++
-    counter.value++
+    const counter = reactive<{ value?: number }>({ value: 0 })
+    const processCounter = vi.fn<(hasCounter: boolean) => void>()
+    watchEffect(() => processCounter('value' in counter))
+    delete counter.value
+    counter.value = 0
+    delete counter.value
 
-    expect(effect_).toHaveBeenCalledTimes(4)
+    expect(processCounter).toHaveBeenCalledTimes(4)
+    expect(processCounter).toHaveBeenNthCalledWith(1, true)
+    expect(processCounter).toHaveBeenNthCalledWith(2, false)
+    expect(processCounter).toHaveBeenNthCalledWith(3, true)
+    expect(processCounter).toHaveBeenNthCalledWith(4, false)
   })
 
   it(`не должен иметь эффекта, если значение свойства реактивного объекта,
@@ -99,16 +105,14 @@ describe('тестовый набор утилиты `reactive`', () => {
     expect.hasAssertions()
 
     const counter = reactive({ value: 0 })
-    const noopAs: AnyFunction = noop
-    const effect_ = vi.fn<VoidFunction>(() => {
-      noopAs(counter.value)
-    })
-    watchEffect(effect_)
+    const processCounter = vi.fn<(value: number) => void>()
+    watchEffect(() => processCounter(counter.value))
     counter.value = 0
     counter.value = 0
     counter.value = 0
 
-    expect(effect_).toHaveBeenCalledTimes(1)
+    expect(processCounter).toHaveBeenCalledTimes(1)
+    expect(processCounter).toHaveBeenCalledWith(0)
   })
 
   it(`не должен создать реактивный объект из объекта, для которого
@@ -116,18 +120,15 @@ describe('тестовый набор утилиты `reactive`', () => {
     expect.hasAssertions()
 
     const counter_ = { value: 0 }
-    const counterA = reactive(counter_)
-    const counterB = reactive(counter_)
 
-    expect(counterA).toBe(counterB)
+    expect(reactive(counter_)).toBe(reactive(counter_))
   })
 
   it('не должен создать реактивный объект из реактивного объекта', () => {
     expect.hasAssertions()
 
     const counterA = reactive({ value: 0 })
-    const counterB = reactive(counterA)
 
-    expect(counterA).toBe(counterB)
+    expect(counterA).toBe(reactive(counterA))
   })
 })

@@ -1,3 +1,4 @@
+import type { Dictionary } from 'ts-essentials'
 import { describe, expect, it, vi } from 'vitest'
 import { Dependency } from '../../dependency'
 import watchEffect from '../watch_effect'
@@ -9,7 +10,7 @@ describe('тестовый набор утилиты `watchEffect`', () => {
     const Key = Object.freeze({
       TRACKED_PROP: Symbol(),
       UNTRACKED_PROP: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP)
@@ -30,7 +31,7 @@ describe('тестовый набор утилиты `watchEffect`', () => {
 
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effectA_ = vi.fn<VoidFunction>(() =>
       dependency.track(Key.TRACKED_PROP_A)
@@ -54,7 +55,7 @@ describe('тестовый набор утилиты `watchEffect`', () => {
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol(),
       TRACKED_PROP_B: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependencyA = new Dependency()
     const dependencyB = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() => {
@@ -77,7 +78,7 @@ describe('тестовый набор утилиты `watchEffect`', () => {
 
     const Key = Object.freeze({
       TRACKED_PROP_A: Symbol()
-    } satisfies Record<string, symbol>)
+    } satisfies Dictionary<symbol>)
     const dependency = new Dependency()
     const effect_ = vi.fn<VoidFunction>(() => {
       dependency.track(Key.TRACKED_PROP_A)

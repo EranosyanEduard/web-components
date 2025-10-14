@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { isReactive } from '../../reactive'
 import { isRef, ref } from '../../ref'
-import { computed } from '../computed.api'
+import { computed } from '../computed'
 
 describe('тестовый набор утилиты `computed`', () => {
   it('должен создать вычисляемое значение, доступное только для чтения', () => {
@@ -15,11 +15,11 @@ describe('тестовый набор утилиты `computed`', () => {
     counter.value++
     counter.value++
 
+    expect(computedCounter.value).toBe('count is 2')
     expect(computeCounter).toHaveBeenCalledTimes(3)
     expect(computeCounter).toHaveNthReturnedWith(1, 'count is 0')
     expect(computeCounter).toHaveNthReturnedWith(2, 'count is 1')
     expect(computeCounter).toHaveNthReturnedWith(3, 'count is 2')
-    expect(computedCounter.value).toBe('count is 2')
   })
 
   it('должен создать вычисляемое значение, доступное для чтения и записи', () => {
@@ -36,14 +36,14 @@ describe('тестовый набор утилиты `computed`', () => {
     computedCounter.value++
     computedCounter.value++
 
+    expect(computedCounter.value).toBe(2)
     expect(computeCounter).toHaveBeenCalledTimes(3)
     expect(computeCounter).toHaveNthReturnedWith(1, 0)
     expect(computeCounter).toHaveNthReturnedWith(2, 1)
     expect(computeCounter).toHaveNthReturnedWith(3, 2)
-    expect(computedCounter.value).toBe(2)
   })
 
-  it(`не должен вычислять значение, если реактивное значение или объект,
+  it(`не должен вычислять значение, если реактивные значения или объекты,
     использующиеся в вычисляемом значении, не изменились`, () => {
     expect.hasAssertions()
 
@@ -56,9 +56,9 @@ describe('тестовый набор утилиты `computed`', () => {
     counter.value = 0
     counter.value = 0
 
+    expect(computedCounter.value).toBe('count is 0')
     expect(computeCounter).toHaveBeenCalledTimes(1)
     expect(computeCounter).toHaveNthReturnedWith(1, 'count is 0')
-    expect(computedCounter.value).toBe('count is 0')
   })
 
   it('не должен воспринимать вычисляемое значение в качестве реактивного объекта', () => {

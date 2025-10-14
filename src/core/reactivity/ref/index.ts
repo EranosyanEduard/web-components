@@ -1,2 +1,2 @@
-export * from './ref.api'
-export type * from './typedef'
+export * from './ref'
+export type * from './typedefs'

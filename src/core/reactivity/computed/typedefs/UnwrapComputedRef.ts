@@ -1,12 +1,5 @@
-import type { RefLike } from '../../ref'
+import type { ComputedRef } from './ComputedRef'
 
-declare const ComputedRefSymbol: unique symbol
-export interface ComputedRef<T> extends Readonly<RefLike<T>> {
-  readonly [ComputedRefSymbol]: true
-}
-export interface WritableComputedRef<T> extends RefLike<T> {
-  readonly [ComputedRefSymbol]: true
-}
 /**
  * Распаковать вычисляемое значение.
  * @since 1.0.0
@@ -16,7 +9,7 @@ export interface WritableComputedRef<T> extends RefLike<T> {
  * const counter = ref(0)
  * const computedCounter = computed<UnwrapRef<typeof counter>>(() => counter.value)
  * type ComputedCounter = UnwrapComputedRef<typeof computedCounter>
- * //   ^ number
+ * //   ^? number
  * @example
  * <caption>вычисляемое свойство, доступное для чтения и записи</caption>
  * const counter = ref(0)
@@ -29,12 +22,7 @@ export interface WritableComputedRef<T> extends RefLike<T> {
  *   }
  * })
  * type ComputedCounter = UnwrapComputedRef<typeof computedCounter>
- * //   ^ number
+ * //   ^? number
  */
-export type UnwrapComputedRef<
-  T extends ComputedRef<unknown> | WritableComputedRef<unknown>
-> = T extends ComputedRef<infer U>
-  ? U
-  : T extends WritableComputedRef<infer U>
-    ? U
-    : never
+export type UnwrapComputedRef<T extends ComputedRef<unknown>> =
+  T extends ComputedRef<infer U> ? U : never

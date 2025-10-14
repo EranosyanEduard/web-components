@@ -1,36 +1,50 @@
-import { type Reactive, reactive } from '../reactive'
-import type * as Typedef from './typedef'
+import Ref from './Ref.impl'
 
 /**
- * Реактивное значение.
+ * Предикат, проверяющий является ли полученный аргумент реактивным значением.
+ * @param value произвольное значение
+ * @returns `true`, если `value` - реактивное значение, иначе - `false`
  * @since 1.0.0
  * @version 1.0.0
+ * @example
+ * isRef(ref(0))                 // -> true
+ * isRef(reactive({ value: 0 })) // -> false
+ * isRef({ value: 0 })           // -> false
  */
-class Ref<T> {
-  static isRef(value: unknown): value is Typedef.Ref<unknown> {
-    return value instanceof Ref
-  }
+const isRef = Ref.isRef
+/**
+ * Создать реактивное значение.
+ * @param value произвольное значение
+ * @returns реактивное значение
+ * @since 1.0.0
+ * @version 1.0.0
+ * @example
+ * <caption>Примитивное значение</caption>
+ * const counter = ref(0)
+ * const stopEffect = watchEffect(() => {
+ *   console.log(`count is ${counter.value}`)
+ * })
+ * counter.value++ // -> count is 1
+ * counter.value++ // -> count is 2
+ * counter.value++ // -> count is 3
+ * stopEffect()
+ * counter.value++
+ * counter.value++
+ * counter.value++
+ * @example
+ * <caption>Объект</caption>
+ * const counters = ref({ counterA: 0 })
+ * const stopEffect = watchEffect(() => {
+ *   console.log(`count is ${counters.value.counterA}`)
+ * })
+ * counter.value.counterA++ // -> count is 1
+ * counter.value.counterA++ // -> count is 2
+ * counter.value.counterA++ // -> count is 3
+ * stopEffect()
+ * counter.value.counterA++
+ * counter.value.counterA++
+ * counter.value.counterA++
+ */
+const ref = Ref.new
 
-  static new<T>(value: T): T extends Typedef.Ref<unknown> ? T : Typedef.Ref<T> {
-    // @ts-expect-error проигнорировать ошибку типизации:
-    // значение, возвращаемое методом будет соответствовать
-    // типу Ref<T>.
-    return Ref.isRef(value) ? value : new Ref(value)
-  }
-
-  readonly #reactiveValue: Reactive<Typedef.RefLike<T>>
-
-  private constructor(value: T) {
-    this.#reactiveValue = reactive({ value })
-  }
-
-  get value(): T {
-    return this.#reactiveValue.value
-  }
-
-  set value(newValue: T) {
-    this.#reactiveValue.value = newValue
-  }
-}
-
-export default Ref
+export { isRef, ref }

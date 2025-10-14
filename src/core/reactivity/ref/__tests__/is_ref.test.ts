@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { reactive } from '../../reactive'
-import { isRef, ref } from '../ref.api'
+import { isRef, ref } from '../ref'
 
 describe('тестовый набор утилиты `isRef`', () => {
   it(`должен возвращать логическое значение, указывающее является ли значение

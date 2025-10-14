@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isReactive, reactive } from '../reactive.api'
+import { isReactive, reactive } from '../reactive'
 
 describe('тестовый набор утилиты `isReactive`', () => {
   it(`должен возвращать логическое значение, указывающее является ли значение
