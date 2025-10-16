@@ -2,19 +2,16 @@ import isEqual from 'es-toolkit/compat/isEqual'
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
 import _once from 'es-toolkit/compat/once'
-import type { Getter } from '../../typedef'
-import {
-  type ComputedRef,
-  computed,
-  type WritableComputedRef
-} from '../computed'
-import { isReactive, type Reactive, reactiveTrackAll } from '../reactive'
+import type { AccessorGet } from '../../typedefs'
+import { type ComputedRef, computed } from '../computed'
+import { isReactive, type Reactive } from '../reactive'
+import ReactiveImpl from '../reactive/Reactive.impl'
 import type { Ref, RefLike } from '../ref'
 import { watchEffect } from '../watch_effect'
 import type { WatchHandler, WatchOptions } from './typedef'
 
 function watch<T>(
-  source: Getter<T> | ComputedRef<T> | WritableComputedRef<T> | Ref<T>,
+  source: AccessorGet<T> | ComputedRef<T> | Ref<T>,
   handler: WatchHandler<T>,
   options?: Partial<WatchOptions>
 ): VoidFunction
@@ -28,12 +25,24 @@ function watch<T extends object>(
  * @returns функцию, прекращающую наблюдение.
  * @since 1.0.0
  * @version 1.0.0
+ * @example
+ * <caption>Наблюдатель на реактивным значением</caption>
+ * const counter = ref(0)
+ * const stopWatch = watch(counter, (newValue, oldValue) => {
+ *   console.log(`newValue: ${newValue}, oldValue: ${oldValue}`)
+ * })
+ * counter.value++ // -> newValue: 1, oldValue: 0
+ * counter.value++ // -> newValue: 2, oldValue: 1
+ * counter.value++ // -> newValue: 3, oldValue: 2
+ * stopWatch()
+ * counter.value++
+ * counter.value++
+ * counter.value++
  */
 function watch(
   source:
-    | Getter<unknown>
+    | AccessorGet<unknown>
     | ComputedRef<unknown>
-    | WritableComputedRef<unknown>
     | Reactive<object>
     | Ref<unknown>,
   handler: WatchHandler<unknown>,
@@ -54,7 +63,7 @@ function watch(
   } else if (isReactive(source)) {
     source_ = {
       self: { value: source },
-      setup: _once(() => reactiveTrackAll(source))
+      setup: _once(() => ReactiveImpl.requestTrackAllPropertyKeys(source))
     }
   } else {
     source_ = {

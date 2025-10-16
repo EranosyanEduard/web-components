@@ -10,29 +10,45 @@ describe('тестовый набор утилиты `watch`', () => {
     его свойства`, () => {
     expect.hasAssertions()
 
-    const counters = reactive({ a: 0, b: 0 })
+    const counters = reactive({
+      a: 0,
+      b: 0,
+      c: {
+        d: {
+          e: 0
+        }
+      }
+    })
     const watchHandler = vi.fn<WatchHandler<UnwrapReactive<typeof counters>>>()
     const stopWatch = watch(counters, watchHandler)
     counters.a++
 
     expect(watchHandler).toHaveBeenLastCalledWith(
-      { a: 1, b: 0 },
-      { a: 1, b: 0 }
+      { a: 1, b: 0, c: { d: { e: 0 } } },
+      { a: 1, b: 0, c: { d: { e: 0 } } }
     )
 
     counters.b++
 
     expect(watchHandler).toHaveBeenLastCalledWith(
-      { a: 1, b: 1 },
-      { a: 1, b: 1 }
+      { a: 1, b: 1, c: { d: { e: 0 } } },
+      { a: 1, b: 1, c: { d: { e: 0 } } }
     )
-    expect(watchHandler).toHaveBeenCalledTimes(2)
+
+    counters.c.d.e++
+
+    expect(watchHandler).toHaveBeenLastCalledWith(
+      { a: 1, b: 1, c: { d: { e: 1 } } },
+      { a: 1, b: 1, c: { d: { e: 1 } } }
+    )
+
+    expect(watchHandler).toHaveBeenCalledTimes(3)
 
     stopWatch()
     counters.a++
     counters.b++
 
-    expect(watchHandler).toHaveBeenCalledTimes(2)
+    expect(watchHandler).toHaveBeenCalledTimes(3)
   })
 
   it('должен наблюдать за реактивным значением', () => {

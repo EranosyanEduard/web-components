@@ -1,6 +1,7 @@
 import isArray from 'es-toolkit/compat/isArray'
 import isFunction from 'es-toolkit/compat/isFunction'
 import isObject from 'es-toolkit/compat/isObject'
+import type { Dictionary } from 'ts-essentials'
 import { Dependency } from '../dependency'
 import type * as Typedefs from './typedefs'
 
@@ -8,8 +9,8 @@ const REACTIVE_REGISTRY = new WeakMap<object, Reactive<object>>()
 /** Коллекция служебных ключей */
 const MagicPropertyKey = Object.freeze({
   REACTIVE_SYMBOL: Symbol(),
-  TRACK_ALL: Symbol()
-} satisfies Record<string, symbol>)
+  TRACK_ALL_PROPERTY_KEYS: Symbol()
+} satisfies Dictionary<symbol>)
 
 /**
  * Реактивный объект.
@@ -24,7 +25,8 @@ class Reactive<T extends object> {
   }
 
   static new<T extends object>(
-    object: T
+    object: T,
+    config?: Partial<Typedefs.ReactiveConfig>
   ): T extends Typedefs.Reactive<object> ? T : Typedefs.Reactive<T> {
     if (Reactive.isReactive(object)) {
       // @ts-expect-error проигнорировать ошибку типизации:
@@ -32,22 +34,38 @@ class Reactive<T extends object> {
       // типу Reactive<T>.
       return object
     }
-    const reactiveValue = REACTIVE_REGISTRY.get(object) ?? new Reactive(object)
+    const reactiveValue =
+      REACTIVE_REGISTRY.get(object) ?? new Reactive(object, config)
     // @ts-expect-error проигнорировать ошибку типизации:
     // см. комментарий выше.
     return reactiveValue.#value
   }
 
-  static requestTrackAll(reactiveValue: Typedefs.Reactive<object>): void {
+  static requestTrackAllPropertyKeys(
+    reactiveObject: Typedefs.Reactive<object>
+  ): void {
     // @ts-expect-error проигнорировать ошибку типизации:
-    // реактивный объект имеет данное специальное свойство.
-    reactiveValue[MagicPropertyKey.TRACK_ALL]
+    // потребовать наблюдения за всеми свойствами реактивного объекта.
+    reactiveObject[MagicPropertyKey.TRACK_ALL_PROPERTY_KEYS]
   }
 
-  static #createReactiveArray<T extends unknown[]>(
-    array: T
-  ): Typedefs.Reactive<T> {
-    const dependency = new Dependency()
+  readonly #config: Typedefs.ReactiveConfig
+
+  readonly #dependency: Dependency
+
+  readonly #value: Typedefs.Reactive<T>
+
+  private constructor(object: T, config?: Partial<Typedefs.ReactiveConfig>) {
+    const { externalDependencies = [] } = config ?? {}
+    this.#config = { externalDependencies }
+    this.#dependency = new Dependency()
+    this.#value = isArray(object)
+      ? this.#createReactiveArray(object)
+      : this.#createReactiveObject(object)
+    REACTIVE_REGISTRY.set(object, this)
+  }
+
+  #createReactiveArray<T extends unknown[]>(array: T): Typedefs.Reactive<T> {
     // @ts-expect-error проигнорировать ошибку типизации:
     // подобная типизация возвращаемого значения позволяет
     // использовать тип реактивного объекта в утилитах типов.
@@ -57,7 +75,7 @@ class Reactive<T extends object> {
           return true
         }
         if (prop === MagicPropertyKey.TRACK_ALL) {
-          return dependency.trackAll()
+          return this.#dependency.trackAll()
         }
         const value = Reflect.get(target, prop, receiver)
         if (Object.hasOwn(Array.prototype, prop) && isFunction(value)) {
@@ -72,7 +90,7 @@ class Reactive<T extends object> {
             case Array.prototype.slice:
             case Array.prototype.some:
               return (...args: any) => {
-                dependency.trackAll()
+                this.#dependency.trackAll()
                 return value.apply(
                   target.map((_, i) => receiver[i]),
                   args
@@ -89,7 +107,7 @@ class Reactive<T extends object> {
             case Array.prototype.pop: {
               const pop: Array<unknown>['pop'] = () => {
                 const result = target.pop()
-                dependency.trigger(target.length)
+                this.#dependency.trigger(target.length)
                 return result
               }
               return pop
@@ -99,7 +117,7 @@ class Reactive<T extends object> {
                 const length = target.length
                 const result = target.push(...items)
                 for (let i = length; i < target.length; i++) {
-                  dependency.trigger(i)
+                  this.#dependency.trigger(i)
                 }
                 return result
               }
@@ -111,7 +129,7 @@ class Reactive<T extends object> {
                 const result = target.reverse()
                 oldTarget.forEach((it, i) => {
                   if (it !== target[i]) {
-                    dependency.trigger(i)
+                    this.#dependency.trigger(i)
                   }
                 })
                 return result
@@ -124,7 +142,7 @@ class Reactive<T extends object> {
                 const result = target.sort(compare)
                 oldTarget.forEach((it, i) => {
                   if (it !== target[i]) {
-                    dependency.trigger(i)
+                    this.#dependency.trigger(i)
                   }
                 })
                 return result
@@ -135,7 +153,7 @@ class Reactive<T extends object> {
               const shift: Array<unknown>['shift'] = () => {
                 const result = target.shift()
                 target.forEach((_, i) => {
-                  dependency.trigger(i)
+                  this.#dependency.trigger(i)
                 })
                 return result
               }
@@ -145,7 +163,7 @@ class Reactive<T extends object> {
               const unshift: Array<unknown>['unshift'] = (...items) => {
                 const result = target.unshift(...items)
                 target.forEach((_, i) => {
-                  dependency.trigger(i)
+                  this.#dependency.trigger(i)
                 })
                 return result
               }
@@ -157,7 +175,7 @@ class Reactive<T extends object> {
                 const [start, deleteCount = target.length - start] = args
                 const result = value.apply(target, args)
                 for (let i = start; i <= deleteCount; i++) {
-                  dependency.trigger(i)
+                  this.#dependency.trigger(i)
                 }
                 return result
               }
@@ -166,7 +184,7 @@ class Reactive<T extends object> {
           }
           return value.bind(target)
         }
-        dependency.track(prop)
+        this.#dependency.track(prop)
         return isObject(value) ? Reactive.new(value) : value
       },
       set: (target, prop, value, receiver) => {
@@ -179,29 +197,26 @@ class Reactive<T extends object> {
           !Number.isNaN(oldValue) &&
           !Number.isNaN(value)
         ) {
-          dependency.trigger(prop)
+          this.#dependency.trigger(prop)
         }
         return isOk
       },
       has: (target, prop) => {
-        dependency.track(prop)
+        this.#dependency.track(prop)
         return Reflect.has(target, prop)
       },
       deleteProperty: (target, prop) => {
         const hasProp = Object.hasOwn(target, prop)
         const isOk = Reflect.deleteProperty(target, prop)
         if (hasProp && isOk) {
-          dependency.trigger(prop)
+          this.#dependency.trigger(prop)
         }
         return isOk
       }
     })
   }
 
-  static #createReactiveObject<T extends object>(
-    object: T
-  ): Typedefs.Reactive<T> {
-    const dependency = new Dependency()
+  #createReactiveObject<T extends object>(object: T): Typedefs.Reactive<T> {
     // @ts-expect-error проигнорировать ошибку типизации:
     // подобная типизация возвращаемого значения позволяет
     // использовать тип реактивного объекта в утилитах типов.
@@ -210,7 +225,7 @@ class Reactive<T extends object> {
         const hasProp = Object.hasOwn(target, prop)
         const isOk = Reflect.deleteProperty(target, prop)
         if (hasProp && isOk) {
-          dependency.trigger(prop)
+          this.#dependency.trigger(prop)
         }
         return isOk
       },
@@ -218,15 +233,22 @@ class Reactive<T extends object> {
         if (prop === MagicPropertyKey.REACTIVE_SYMBOL) {
           return true
         }
-        if (prop === MagicPropertyKey.TRACK_ALL) {
-          return dependency.trackAll()
+        if (prop === MagicPropertyKey.TRACK_ALL_PROPERTY_KEYS) {
+          return this.#dependency.trackAll()
         }
         const value = Reflect.get(target, prop, receiver)
-        dependency.track(prop)
-        return isObject(value) ? Reactive.new(value) : value
+        this.#dependency.track(prop)
+        return isObject(value)
+          ? Reactive.new(value, {
+              externalDependencies: [
+                ...this.#config.externalDependencies,
+                this.#dependency
+              ]
+            })
+          : value
       },
       has: (target, prop) => {
-        dependency.track(prop)
+        this.#dependency.track(prop)
         return Reflect.has(target, prop)
       },
       set: (target, prop, value, receiver) => {
@@ -239,20 +261,14 @@ class Reactive<T extends object> {
           !Number.isNaN(oldValue) &&
           !Number.isNaN(value)
         ) {
-          dependency.trigger(prop)
+          this.#dependency.trigger(prop)
+          this.#config.externalDependencies.forEach((d) => {
+            d.triggerAll()
+          })
         }
         return isOk
       }
     })
-  }
-
-  readonly #value: Typedefs.Reactive<T>
-
-  private constructor(object: T) {
-    this.#value = isArray(object)
-      ? Reactive.#createReactiveArray(object)
-      : Reactive.#createReactiveObject(object)
-    REACTIVE_REGISTRY.set(object, this)
   }
 }
 

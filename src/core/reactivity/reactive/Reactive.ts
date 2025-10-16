@@ -44,6 +44,8 @@ const isReactive = Reactive.isReactive
  * counter.value++
  * counter.value++
  */
-const reactive = Reactive.new
+const reactive = <T extends object>(
+  object: T
+): ReturnType<typeof Reactive.new<T>> => Reactive.new(object)
 
 export { isReactive, reactive }
