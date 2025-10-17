@@ -2,7 +2,7 @@ import kebabCase from 'es-toolkit/compat/kebabCase'
 import mapValues from 'es-toolkit/compat/mapValues'
 import Component from './Component'
 import Prop from './Prop'
-import type { ComponentOptions, PropsOptions } from './typedef'
+import type { ComponentOptions } from './typedef'
 
 /**
  * Создать веб-компонент.
@@ -16,19 +16,16 @@ function defineComponent<
 >(
   componentOptions: ComponentOptions<Props, Emits>
 ): {
-  readonly emits: Emits[]
-  readonly props: PropsOptions<Props>
+  readonly componentOptions: ComponentOptions<Props, Emits>
   new (): Component<Props, Emits>
 } {
-  const { emits = [], name, props = {} } = componentOptions
+  const { name, props = {} } = componentOptions
   const propsOptions = mapValues(
     props,
     (propOptions, propName) => new Prop(propName, propOptions)
   )
   const Component_ = class extends Component<Props, Emits> {
-    static readonly emits = emits
-
-    static readonly props = props
+    static readonly componentOptions = componentOptions
 
     constructor() {
       super({
@@ -41,9 +38,6 @@ function defineComponent<
     }
   }
   customElements.define(kebabCase(name), Component_)
-  // @ts-expect-error проигнорировать ошибку типизации:
-  // невозможно устранить ошибку типизации, но в данном случае
-  // это не повлияет на корректность работы кода.
   return Component_
 }
 

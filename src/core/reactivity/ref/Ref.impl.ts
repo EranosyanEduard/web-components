@@ -1,4 +1,5 @@
-import { type Reactive, reactive } from '../reactive'
+import type { Reactive, ReactiveConfig } from '../reactive'
+import ReactiveImpl from '../reactive/Reactive.impl'
 import type * as Typedefs from './typedefs'
 
 /**
@@ -12,18 +13,19 @@ class Ref<T> {
   }
 
   static new<T>(
-    value: T
+    value: T,
+    config?: Pick<ReactiveConfig, 'isShallow'>
   ): T extends Typedefs.Ref<unknown> ? T : Typedefs.Ref<T> {
     // @ts-expect-error проигнорировать ошибку типизации:
     // значение, возвращаемое методом будет соответствовать
     // типу Ref<T>.
-    return Ref.isRef(value) ? value : new Ref(value)
+    return Ref.isRef(value) ? value : new Ref(value, config)
   }
 
   readonly #reactiveValue: Reactive<Typedefs.RefLike<T>>
 
-  private constructor(value: T) {
-    this.#reactiveValue = reactive({ value })
+  private constructor(value: T, config?: Pick<ReactiveConfig, 'isShallow'>) {
+    this.#reactiveValue = ReactiveImpl.new({ value }, config)
   }
 
   get value(): T {

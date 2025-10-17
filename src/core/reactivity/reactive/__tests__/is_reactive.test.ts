@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isReactive, reactive } from '../reactive'
+import { isReactive, reactive, shallowReactive } from '../reactive'
 
 describe('тестовый набор утилиты `isReactive`', () => {
   it(`должен возвращать логическое значение, указывающее является ли значение
@@ -7,6 +7,7 @@ describe('тестовый набор утилиты `isReactive`', () => {
     expect.hasAssertions()
 
     expect(isReactive(reactive({ counter: 0 }))).toBe(true)
+    expect(isReactive(shallowReactive({ counter: 0 }))).toBe(true)
     expect(isReactive({ counter: 0 })).toBe(false)
   })
 })

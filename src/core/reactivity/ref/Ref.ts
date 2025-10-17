@@ -13,7 +13,7 @@ import Ref from './Ref.impl'
  */
 const isRef = Ref.isRef
 /**
- * Создать реактивное значение.
+ * Создать глубоко реактивное значение.
  * @param value произвольное значение
  * @returns реактивное значение
  * @since 1.0.0
@@ -45,6 +45,17 @@ const isRef = Ref.isRef
  * counter.value.counterA++
  * counter.value.counterA++
  */
-const ref = Ref.new
+const ref = <T>(value: T): ReturnType<typeof Ref.new<T>> => Ref.new(value)
+/**
+ * Создать поверхностно реактивное значение.
+ * @param value произвольное значение
+ * @returns реактивное значение
+ * @see {@link ref}
+ * @since 1.0.0
+ * @version 1.0.0
+ */
+const shallowRef = <T>(value: T): ReturnType<typeof Ref.new<T>> => {
+  return Ref.new(value, { isShallow: true })
+}
 
-export { isRef, ref }
+export { isRef, ref, shallowRef }

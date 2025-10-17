@@ -56,8 +56,11 @@ class Reactive<T extends object> {
   readonly #value: Typedefs.Reactive<T>
 
   private constructor(object: T, config?: Partial<Typedefs.ReactiveConfig>) {
-    const { externalDependencies = [] } = config ?? {}
-    this.#config = { externalDependencies }
+    const { externalDependencies = [], isShallow = false } = config ?? {}
+    this.#config = {
+      externalDependencies,
+      isShallow
+    }
     this.#dependency = new Dependency()
     this.#value = isArray(object)
       ? this.#createReactiveArray(object)
@@ -238,7 +241,7 @@ class Reactive<T extends object> {
         }
         const value = Reflect.get(target, prop, receiver)
         this.#dependency.track(prop)
-        return isObject(value)
+        return isObject(value) && !this.#config.isShallow
           ? Reactive.new(value, {
               externalDependencies: [
                 ...this.#config.externalDependencies,
@@ -262,9 +265,9 @@ class Reactive<T extends object> {
           !Number.isNaN(value)
         ) {
           this.#dependency.trigger(prop)
-          this.#config.externalDependencies.forEach((d) => {
+          for (const d of this.#config.externalDependencies) {
             d.triggerAll()
-          })
+          }
         }
         return isOk
       }

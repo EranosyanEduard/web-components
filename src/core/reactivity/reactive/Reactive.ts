@@ -12,7 +12,7 @@ import Reactive from './Reactive.impl'
  */
 const isReactive = Reactive.isReactive
 /**
- * Создать реактивный объект.
+ * Создать глубоко реактивный объект.
  * @param object произвольный объект
  * @returns реактивный объект
  * @since 1.0.0
@@ -47,5 +47,18 @@ const isReactive = Reactive.isReactive
 const reactive = <T extends object>(
   object: T
 ): ReturnType<typeof Reactive.new<T>> => Reactive.new(object)
+/**
+ * Создать поверхностно реактивный объект.
+ * @param object произвольный объект
+ * @returns реактивный объект
+ * @see {@link reactive}
+ * @since 1.0.0
+ * @version 1.0.0
+ */
+const shallowReactive = <T extends object>(
+  object: T
+): ReturnType<typeof Reactive.new<T>> => {
+  return Reactive.new(object, { isShallow: true })
+}
 
-export { isReactive, reactive }
+export { isReactive, reactive, shallowReactive }
