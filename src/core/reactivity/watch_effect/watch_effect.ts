@@ -7,16 +7,15 @@ import { Effect } from '../effect'
  * @version 1.0.0
  * @example
  * const counter = ref(0)
- * const stopEffect = watchEffect(() => {
+ * const effect = () => {
  *   console.log(`count is ${counter.value}`)
- * })
- * counter.value++ // -> count is 1
- * counter.value++ // -> count is 2
- * counter.value++ // -> count is 3
+ * }
+ * const stopEffect = watchEffect(effect) // -> count is 0
+ * counter.value++                        // -> count is 1
+ * counter.value++                        // -> count is 2
+ * counter.value++                        // -> count is 3
  * stopEffect()
- * counter.value++
- * counter.value++
- * counter.value++
+ * counter.value++                        // no effect
  */
 function watchEffect(effect: VoidFunction): VoidFunction {
   return new Effect(effect).use()

@@ -14,14 +14,9 @@ const MagicPropertyKey = Object.freeze({
  * @version 1.0.0
  */
 class Dependency {
-  readonly #effects: Map<PropertyKey, Set<Effect>>
+  readonly #effects = new Map<PropertyKey, Set<Effect>>()
 
-  readonly #ondestroyEffects: WeakMap<Effect, Set<PropertyKey>>
-
-  constructor() {
-    this.#effects = new Map()
-    this.#ondestroyEffects = new WeakMap()
-  }
+  readonly #ondestroyEffects = new WeakMap<Effect, Set<PropertyKey>>()
 
   track(p: PropertyKey): void {
     const activeEffect = Effect.getActive()
@@ -39,16 +34,12 @@ class Dependency {
   }
 
   trigger(p: PropertyKey): void {
-    this.#effects.get(p)?.forEach((e) => {
-      e.use()
-    })
+    this.#trigger(p)
     this.triggerAll()
   }
 
   triggerAll(): void {
-    this.#effects.get(MagicPropertyKey.TRACK_ALL)?.forEach((e) => {
-      e.use()
-    })
+    this.#trigger(MagicPropertyKey.TRACK_ALL)
   }
 
   #ondestroyEffect(args: {
@@ -71,6 +62,14 @@ class Dependency {
         this.#effects.delete(p)
       }
     })
+  }
+
+  #trigger(p: PropertyKey): void {
+    if (this.#effects.has(p)) {
+      for (const e of this.#effects.get(p)!) {
+        e.use()
+      }
+    }
   }
 }
 

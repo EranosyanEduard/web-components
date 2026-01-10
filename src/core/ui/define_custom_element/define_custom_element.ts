@@ -10,7 +10,7 @@ import type { ComponentOptions } from './typedef'
  * @since 1.0.0
  * @version 1.0.0
  */
-function defineComponent<
+function defineCustomElement<
   Props extends Record<string, unknown> = Record<string, unknown>,
   Emits extends string = string
 >(
@@ -41,4 +41,4 @@ function defineComponent<
   return Component_
 }
 
-export default defineComponent
+export default defineCustomElement

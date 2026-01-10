@@ -1,5 +1,5 @@
 import noop from 'es-toolkit/compat/noop'
-import type { Accessor, Maybe } from '../../typedefs'
+import type { Accessor, Maybe } from '../../ts-toolkit'
 
 let accessor_: Maybe<Effect> = null
 /** Активный эффект */
@@ -18,16 +18,14 @@ const activeEffect: Accessor<Maybe<Effect>> = {
 class Effect {
   static readonly getActive = activeEffect.get
 
-  #destroyed: boolean
+  #destroyed = false
 
   readonly #effect: VoidFunction
 
-  readonly #ondestroy: Set<(e: Effect) => void>
+  readonly #ondestroy = new Set<(e: Effect) => void>()
 
   constructor(value: VoidFunction) {
-    this.#destroyed = false
     this.#effect = value
-    this.#ondestroy = new Set()
   }
 
   ondestroy(ondestroy: (e: Effect) => void): void {
@@ -49,9 +47,9 @@ class Effect {
     return () => {
       if (!this.#destroyed) {
         this.#destroyed = true
-        this.#ondestroy.forEach((ondestroy) => {
+        for (const ondestroy of this.#ondestroy) {
           ondestroy(this)
-        })
+        }
       }
     }
   }

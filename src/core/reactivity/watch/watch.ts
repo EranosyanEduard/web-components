@@ -2,13 +2,13 @@ import isEqual from 'es-toolkit/compat/isEqual'
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
 import _once from 'es-toolkit/compat/once'
-import type { AccessorGet } from '../../typedefs'
+import type { AccessorGet } from '../../ts-toolkit'
 import { type ComputedRef, computed } from '../computed'
 import { isReactive, type Reactive } from '../reactive'
 import ReactiveImpl from '../reactive/Reactive.impl'
 import type { Ref, RefLike } from '../ref'
 import { watchEffect } from '../watch_effect'
-import type { WatchHandler, WatchOptions } from './typedef'
+import type { WatchHandler, WatchOptions } from './typedefs'
 
 function watch<T>(
   source: AccessorGet<T> | ComputedRef<T> | Ref<T>,
@@ -29,15 +29,13 @@ function watch<T extends object>(
  * <caption>Наблюдатель на реактивным значением</caption>
  * const counter = ref(0)
  * const stopWatch = watch(counter, (newValue, oldValue) => {
- *   console.log(`newValue: ${newValue}, oldValue: ${oldValue}`)
+ *   console.log(`new: ${newValue}, old: ${oldValue}`)
  * })
- * counter.value++ // -> newValue: 1, oldValue: 0
- * counter.value++ // -> newValue: 2, oldValue: 1
- * counter.value++ // -> newValue: 3, oldValue: 2
+ * counter.value++ // -> new: 1, old: 0
+ * counter.value++ // -> new: 2, old: 1
+ * counter.value++ // -> new: 3, old: 2
  * stopWatch()
- * counter.value++
- * counter.value++
- * counter.value++
+ * counter.value++ // no effect
  */
 function watch(
   source:

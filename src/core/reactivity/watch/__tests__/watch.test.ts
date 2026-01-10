@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { computed, type UnwrapComputedRef } from '../../computed'
 import { reactive, type UnwrapReactive } from '../../reactive'
 import { ref, type UnwrapRef } from '../../ref'
-import type { WatchHandler } from '../typedef'
+import type { WatchHandler } from '../typedefs'
 import watch from '../watch'
 
 describe('тестовый набор утилиты `watch`', () => {

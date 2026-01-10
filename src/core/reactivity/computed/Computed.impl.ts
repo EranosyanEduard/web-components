@@ -1,6 +1,6 @@
 import isFunction from 'es-toolkit/compat/isFunction'
 import noop from 'es-toolkit/compat/noop'
-import type { Accessor, AccessorGet } from '../../typedefs'
+import type { Accessor, AccessorGet } from '../../ts-toolkit'
 import { type Ref, ref } from '../ref'
 import { watchEffect } from '../watch_effect'
 import type { ComputedRef, WritableComputedRef } from './typedefs'

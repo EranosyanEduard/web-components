@@ -2,7 +2,10 @@ import findLast from 'es-toolkit/compat/findLast'
 import isEmpty from 'es-toolkit/compat/isEmpty'
 import isNull from 'es-toolkit/compat/isNull'
 import type { Getter } from '../../typedef'
-import { type CurrentInstance, getCurrentInstance } from '../define_component'
+import {
+  type CurrentInstance,
+  getCurrentInstance
+} from '../define_custom_element'
 import type { DependencyInjection, InjectionKey } from './typedef'
 
 const providers = new Map<
